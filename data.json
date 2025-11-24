@@ -1,0 +1,202 @@
+[
+  {
+    "name": "Es Kopi Susu Aren",
+    "category": "drinks",
+    "calories": 210,
+    "price": 28000.00,
+    "ingredients": ["coffee", "milk", "ice", "palm sugar"],
+    "description": "Iced coffee milk with aromatic palm sugar."
+  },
+  {
+    "name": "Americano Dingin",
+    "category": "drinks",
+    "calories": 15,
+    "price": 20000.00,
+    "ingredients": ["espresso", "water", "ice"],
+    "description": "Bold, chilled espresso diluted with water."
+  },
+  {
+    "name": "Kopi Hitam Panas",
+    "category": "drinks",
+    "calories": 5,
+    "price": 18000.00,
+    "ingredients": ["coffee", "hot water"],
+    "description": "Freshly brewed hot black coffee."
+  },
+  {
+    "name": "Latte Vanilla Panas",
+    "category": "drinks",
+    "calories": 250,
+    "price": 32000.00,
+    "ingredients": ["espresso", "steamed milk", "vanilla syrup"],
+    "description": "Smooth latte with a hint of vanilla flavor."
+  },
+  {
+    "name": "Matcha Latte Dingin",
+    "category": "drinks",
+    "calories": 300,
+    "price": 35000.00,
+    "ingredients": ["matcha powder", "milk", "ice", "sugar"],
+    "description": "Refreshing iced green tea latte."
+  },
+  {
+    "name": "Chocolate Panas",
+    "category": "drinks",
+    "calories": 350,
+    "price": 30000.00,
+    "ingredients": ["cocoa powder", "hot milk", "sugar"],
+    "description": "Rich, creamy hot chocolate."
+  },
+  {
+    "name": "Pisang Goreng Keju",
+    "category": "snacks",
+    "calories": 420,
+    "price": 22000.00,
+    "ingredients": ["banana", "flour", "oil", "cheese", "condensed milk"],
+    "description": "Deep-fried banana fritters topped with grated cheese."
+  },
+  {
+    "name": "Roti Bakar Cokelat",
+    "category": "snacks",
+    "calories": 380,
+    "price": 18000.00,
+    "ingredients": ["bread", "butter", "chocolate spread"],
+    "description": "Toasted bread with sweet chocolate filling."
+  },
+  {
+    "name": "Nasi Goreng Ayam",
+    "category": "main_course",
+    "calories": 650,
+    "price": 45000.00,
+    "ingredients": ["rice", "chicken", "egg", "spices", "soy sauce"],
+    "description": "Classic Indonesian fried rice with shredded chicken."
+  },
+  {
+    "name": "Mie Goreng Spesial",
+    "category": "main_course",
+    "calories": 590,
+    "price": 42000.00,
+    "ingredients": ["noodles", "vegetables", "meatballs", "spices", "sweet soy sauce"],
+    "description": "Stir-fried noodles with various toppings and special seasoning."
+  },
+  {
+    "name": "Lemon Tea Dingin",
+    "category": "drinks",
+    "calories": 150,
+    "price": 24000.00,
+    "ingredients": ["black tea", "lemon juice", "sugar", "ice"],
+    "description": "Sweet and tangy iced black tea with lemon."
+  },
+  {
+    "name": "Cappuccino Panas",
+    "category": "drinks",
+    "calories": 140,
+    "price": 28000.00,
+    "ingredients": ["espresso", "steamed milk", "foam"],
+    "description": "Classic hot cappuccino with thick foam."
+  },
+  {
+    "name": "Red Velvet Latte",
+    "category": "drinks",
+    "calories": 320,
+    "price": 35000.00,
+    "ingredients": ["red velvet powder", "milk", "ice", "sugar"],
+    "description": "Sweet and unique red velvet flavored latte."
+  },
+  {
+    "name": "Croissant Original",
+    "category": "snacks",
+    "calories": 350,
+    "price": 20000.00,
+    "ingredients": ["flour", "butter", "yeast"],
+    "description": "Flaky, buttery French pastry."
+  },
+  {
+    "name": "Cireng Bumbu Rujak",
+    "category": "snacks",
+    "calories": 310,
+    "price": 20000.00,
+    "ingredients": ["tapioca flour", "garlic", "chili", "palm sugar", "peanuts"],
+    "description": "Fried tapioca snacks served with spicy, sweet rujak sauce."
+  },
+  {
+    "name": "Spaghetti Carbonara",
+    "category": "main_course",
+    "calories": 750,
+    "price": 55000.00,
+    "ingredients": ["spaghetti", "egg yolk", "cheese", "smoked beef", "cream"],
+    "description": "Creamy Italian pasta dish."
+  },
+  {
+    "name": "Soto Ayam",
+    "category": "main_course",
+    "calories": 480,
+    "price": 40000.00,
+    "ingredients": ["chicken", "rice vermicelli", "spices", "turmeric", "egg"],
+    "description": "Traditional Indonesian clear chicken soup."
+  },
+  {
+    "name": "Teh Tarik Panas",
+    "category": "drinks",
+    "calories": 190,
+    "price": 22000.00,
+    "ingredients": ["black tea", "condensed milk", "hot water"],
+    "description": "Sweet Malaysian pulled tea, frothy and hot."
+  },
+  {
+    "name": "Earl Grey Tea",
+    "category": "drinks",
+    "calories": 2,
+    "price": 18000.00,
+    "ingredients": ["earl grey tea leaves", "hot water"],
+    "description": "Aromatic black tea flavored with bergamot oil."
+  },
+  {
+    "name": "Aglio Olio Udang",
+    "category": "main_course",
+    "calories": 620,
+    "price": 58000.00,
+    "ingredients": ["spaghetti", "shrimp", "garlic", "olive oil", "chili flakes"],
+    "description": "Spicy and garlicky pasta with shrimp."
+  },
+  {
+    "name": "Tahu Isi Sayuran",
+    "category": "snacks",
+    "calories": 250,
+    "price": 18000.00,
+    "ingredients": ["tofu", "carrots", "cabbage", "flour"],
+    "description": "Fried tofu filled with seasoned vegetables."
+  },
+  {
+    "name": "Es Jeruk",
+    "category": "drinks",
+    "calories": 120,
+    "price": 20000.00,
+    "ingredients": ["fresh orange juice", "ice", "sugar"],
+    "description": "Refreshing iced orange juice."
+  },
+  {
+    "name": "Milkshake Cokelat",
+    "category": "drinks",
+    "calories": 450,
+    "price": 38000.00,
+    "ingredients": ["milk", "ice cream", "chocolate syrup", "ice"],
+    "description": "Thick and rich chocolate milkshake."
+  },
+  {
+    "name": "Chicken Sandwich",
+    "category": "main_course",
+    "calories": 550,
+    "price": 48000.00,
+    "ingredients": ["bread", "grilled chicken", "lettuce", "mayonnaise", "tomato"],
+    "description": "Grilled chicken sandwich on toasted bread."
+  },
+  {
+    "name": "Es Kopi Susu Ori",
+    "category": "drinks",
+    "calories": 180,
+    "price": 25000.00,
+    "ingredients": ["coffee", "milk", "ice", "sugar"],
+    "description": "Classic iced coffee with milk, the original recipe."
+  }
+]
