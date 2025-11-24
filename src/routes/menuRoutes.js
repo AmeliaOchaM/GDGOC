@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const MenuController = require('../controllers/menuController');
+const { validateCaloriesRequest } = require('../middlewares/validator');
 
 // Special routes (must come before /:id to avoid conflicts)
 // GET /menu/group-by-category?mode=count
@@ -22,6 +23,9 @@ router.post('/auto-generate', MenuController.autoGenerateMenu);
 
 // POST /menu/recommendations
 router.post('/recommendations', MenuController.getRecommendations);
+
+// POST /menu/calculate-calories
+router.post('/calculate-calories', validateCaloriesRequest, MenuController.calculateCaloriesAndExercise);
 
 // GET /menu
 // GET /menu?q={{q}}&category={{category}}&min_price={{min_price}}&max_price={{max_price}}&max_cal={{max_cal}}&page={{page}}&per_page={{per_page}}&sort={{sort}}

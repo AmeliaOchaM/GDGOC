@@ -66,7 +66,53 @@ const validateId = (req, res, next) => {
   next();
 };
 
+// Middleware to validate calculate calories request
+const validateCaloriesRequest = (req, res, next) => {
+  const { menu_items } = req.body;
+
+  const errors = [];
+
+  // Validate menu_items exists and is array
+  if (!menu_items) {
+    errors.push('menu_items is required');
+  } else if (!Array.isArray(menu_items)) {
+    errors.push('menu_items must be an array');
+  } else if (menu_items.length === 0) {
+    errors.push('menu_items array cannot be empty');
+  } else {
+    // Validate each menu item
+    menu_items.forEach((item, index) => {
+      if (!item.id && !item.name) {
+        errors.push(`Menu item at index ${index} must have either 'id' or 'name' field`);
+      }
+
+      if (item.id !== undefined && (!Number.isInteger(item.id) || item.id <= 0)) {
+        errors.push(`Menu item at index ${index}: id must be a positive integer`);
+      }
+
+      if (item.name !== undefined && (typeof item.name !== 'string' || item.name.trim().length === 0)) {
+        errors.push(`Menu item at index ${index}: name must be a non-empty string`);
+      }
+
+      if (item.quantity !== undefined && (!Number.isInteger(item.quantity) || item.quantity <= 0)) {
+        errors.push(`Menu item at index ${index}: quantity must be a positive integer`);
+      }
+    });
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      error: 'Validation Error',
+      message: 'Invalid calories calculation request',
+      details: errors
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   validateMenuData,
-  validateId
+  validateId,
+  validateCaloriesRequest
 };

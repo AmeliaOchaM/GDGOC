@@ -213,6 +213,58 @@ class MenuController {
       next(error);
     }
   }
+
+  // POST /menu/calculate-calories - Calculate calories and get exercise recommendations
+  static async calculateCaloriesAndExercise(req, res, next) {
+    try {
+      const { menu_items } = req.body;
+
+      // Validate input
+      if (!menu_items || !Array.isArray(menu_items) || menu_items.length === 0) {
+        throw new ValidationError('Please provide an array of menu items with their IDs or names');
+      }
+
+      // Fetch complete menu details from database
+      const menuDetails = [];
+      for (const item of menu_items) {
+        let menu;
+        
+        // Support both ID and name lookup
+        if (item.id) {
+          menu = MenuService.getMenuById(item.id);
+        } else if (item.name) {
+          // Search by name
+          const allMenus = MenuService.getAllMenusNoPagination();
+          menu = allMenus.find(m => 
+            m.name.toLowerCase() === item.name.toLowerCase()
+          );
+          if (!menu) {
+            throw new ValidationError(`Menu item "${item.name}" not found in database`);
+          }
+        } else {
+          throw new ValidationError('Each menu item must have either an "id" or "name" field');
+        }
+
+        menuDetails.push({
+          id: menu.id,
+          name: menu.name,
+          calories: menu.calories,
+          ingredients: menu.ingredients,
+          quantity: item.quantity || 1
+        });
+      }
+
+      // Calculate total calories and get exercise recommendations using Gemini
+      const analysis = await geminiService.calculateCaloriesAndExercise(menuDetails);
+
+      return successResponse(res, {
+        message: 'Calorie calculation and exercise recommendations generated successfully',
+        data: analysis
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = MenuController;

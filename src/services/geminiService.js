@@ -177,4 +177,175 @@ Make sure all recommendations are from the available menu and perfectly match th
   }
 }
 
-module.exports = { generateMenuItems, recommendMenus };
+async function calculateCaloriesAndExercise(menuItems) {
+  try {
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 4096, // Increased to prevent truncation
+        responseMimeType: "application/json"
+      }
+    });
+
+    // Prepare menu items data for the prompt
+    const menuList = menuItems.map(item => ({
+      name: item.name,
+      calories: item.calories || 0,
+      ingredients: item.ingredients || [],
+      quantity: item.quantity || 1
+    }));
+
+    const prompt = `
+You are a professional nutritionist and fitness advisor. Analyze the following menu items that a user has selected and provide:
+1. Total calories calculation
+2. Nutritional breakdown
+3. Exercise recommendations to burn those calories
+
+Selected Menu Items:
+${JSON.stringify(menuList, null, 2)}
+
+Please provide a comprehensive analysis with these requirements:
+- Calculate the TOTAL calories from all items (considering quantities)
+- Break down macronutrients (estimated protein, carbs, fats)
+- Suggest 3-5 different exercise activities with:
+  * Exercise name
+  * Duration needed to burn the total calories
+  * Intensity level (low, moderate, high)
+  * Calories burned per hour for that activity
+  * Brief description/tips
+
+Return a JSON object with this exact structure:
+{
+  "total_calories": number,
+  "nutritional_breakdown": {
+    "protein": "string (estimated grams)",
+    "carbohydrates": "string (estimated grams)",
+    "fats": "string (estimated grams)",
+    "fiber": "string (optional, estimated grams)"
+  },
+  "menu_details": [
+    {
+      "name": "string",
+      "calories": number,
+      "quantity": number,
+      "subtotal_calories": number
+    }
+  ],
+  "exercise_recommendations": [
+    {
+      "name": "string",
+      "duration_minutes": number,
+      "intensity": "low|moderate|high",
+      "calories_burned_per_hour": number,
+      "description": "string",
+      "tips": "string"
+    }
+  ],
+  "health_notes": "string (general health advice about this meal)",
+  "summary": "string (brief summary of the analysis)"
+}
+
+Be accurate with calorie calculations and realistic with exercise recommendations.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    
+    console.log('=== Gemini Response Debug ===');
+    console.log('Raw response length:', text.length);
+    console.log('First 500 chars:', text.substring(0, 500));
+    console.log('Last 500 chars:', text.substring(text.length - 500));
+    
+    // Try to parse JSON with multiple strategies
+    let json;
+    
+    // Strategy 1: Direct parse
+    try {
+      json = JSON.parse(text);
+      console.log('✓ Direct JSON parse successful');
+      return json;
+    } catch (e) {
+      console.log('✗ Direct JSON parse failed:', e.message);
+    }
+    
+    // Strategy 2: Remove markdown code blocks
+    try {
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      json = JSON.parse(cleanText);
+      console.log('✓ JSON parse after removing markdown successful');
+      return json;
+    } catch (e) {
+      console.log('✗ JSON parse after markdown removal failed:', e.message);
+    }
+    
+    // Strategy 3: Find JSON object boundaries and extract
+    try {
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const extractedJson = text.substring(firstBrace, lastBrace + 1);
+        json = JSON.parse(extractedJson);
+        console.log('✓ JSON parse after extraction successful');
+        return json;
+      }
+    } catch (e) {
+      console.log('✗ JSON parse after extraction failed:', e.message);
+    }
+    
+    // Strategy 4: Try to repair common JSON issues
+    try {
+      let repairedText = text
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      
+      // Find the last complete JSON object
+      const firstBrace = repairedText.indexOf('{');
+      if (firstBrace !== -1) {
+        repairedText = repairedText.substring(firstBrace);
+        
+        // Try to find matching closing brace
+        let braceCount = 0;
+        let endIndex = -1;
+        
+        for (let i = 0; i < repairedText.length; i++) {
+          if (repairedText[i] === '{') braceCount++;
+          if (repairedText[i] === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+              endIndex = i + 1;
+              break;
+            }
+          }
+        }
+        
+        if (endIndex !== -1) {
+          repairedText = repairedText.substring(0, endIndex);
+          json = JSON.parse(repairedText);
+          console.log('✓ JSON parse after repair successful');
+          return json;
+        }
+      }
+    } catch (e) {
+      console.log('✗ JSON parse after repair failed:', e.message);
+    }
+    
+    // All strategies failed
+    console.error('All JSON parsing strategies failed');
+    console.error('Full problematic text:', text);
+    throw new Error(`Invalid JSON response from Gemini API. Unable to parse response after trying multiple strategies.`);
+  } catch (error) {
+    console.error('Error calculating calories and exercise:', error);
+    if (error.message.includes('Invalid JSON')) {
+      throw error;
+    }
+    throw new Error('Failed to calculate calories and generate exercise recommendations');
+  }
+}
+
+module.exports = { generateMenuItems, recommendMenus, calculateCaloriesAndExercise };
