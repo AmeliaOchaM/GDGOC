@@ -1,17 +1,15 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "name": "gdgoc-menu-api",
-  "functions": {
-    "api/index.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index"
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.js"
     }
   ]
 }
