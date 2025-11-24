@@ -2,18 +2,17 @@ const db = require('../config/database');
 
 class MenuModel {
   // Get the next available ID
-  static getNextId() {
-    const stmt = db.prepare('SELECT MAX(id) as maxId FROM menu');
-    const result = stmt.get();
-    return result.maxId ? result.maxId + 1 : 1;
+  static async getNextId() {
+    const result = await db.execute('SELECT MAX(id) as maxId FROM menu');
+    const maxId = result.rows[0]?.maxId;
+    return maxId ? maxId + 1 : 1;
   }
 
   // Reset auto-increment sequence to start from 1
-  static resetAutoIncrement() {
+  static async resetAutoIncrement() {
     try {
       // Delete the sqlite_sequence entry for the menu table
-      const stmt = db.prepare("DELETE FROM sqlite_sequence WHERE name='menu'");
-      stmt.run();
+      await db.execute("DELETE FROM sqlite_sequence WHERE name='menu'");
       return true;
     } catch (error) {
       console.error('Error resetting auto-increment:', error);
@@ -22,34 +21,43 @@ class MenuModel {
   }
 
   // Create new menu item
-  static create(menuData) {
+  static async create(menuData) {
     const { name, category, calories, price, ingredients, description } = menuData;
     
-    // Get the next available ID
-    const nextId = this.getNextId();
+    // Let SQLite auto-increment handle the ID automatically
+    const result = await db.execute({
+      sql: `
+        INSERT INTO menu (name, category, calories, price, ingredients, description)
+        VALUES (?, ?, ?, ?, ?, ?)
+        RETURNING *
+      `,
+      args: [
+        name,
+        category,
+        calories,
+        price,
+        JSON.stringify(ingredients),
+        description || null
+      ]
+    });
     
-    const stmt = db.prepare(`
-      INSERT INTO menu (id, name, category, calories, price, ingredients, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+    // Parse ingredients and return the newly created item directly
+    const menu = result.rows[0];
+    if (menu && menu.ingredients) {
+      menu.ingredients = JSON.parse(menu.ingredients);
+    }
     
-    const info = stmt.run(
-      nextId,
-      name,
-      category,
-      calories,
-      price,
-      JSON.stringify(ingredients),
-      description
-    );
-    
-    return this.findById(info.lastInsertRowid);
+    return menu;
   }
 
   // Find menu by ID
-  static findById(id) {
-    const stmt = db.prepare('SELECT * FROM menu WHERE id = ?');
-    const menu = stmt.get(id);
+  static async findById(id) {
+    const result = await db.execute({
+      sql: 'SELECT * FROM menu WHERE id = ?',
+      args: [id]
+    });
+    
+    const menu = result.rows[0];
     
     if (menu && menu.ingredients) {
       menu.ingredients = JSON.parse(menu.ingredients);
@@ -59,7 +67,7 @@ class MenuModel {
   }
 
   // Find all menus with filters and pagination
-  static findAll(filters = {}) {
+  static async findAll(filters = {}) {
     let query = 'SELECT * FROM menu WHERE 1=1';
     const params = [];
 
@@ -91,8 +99,11 @@ class MenuModel {
 
     // Count total before pagination
     const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
-    const countStmt = db.prepare(countQuery);
-    const { total } = countStmt.get(...params);
+    const countResult = await db.execute({
+      sql: countQuery,
+      args: params
+    });
+    const total = countResult.rows[0]?.total || 0;
 
     // Apply sorting
     if (filters.sort) {
@@ -115,8 +126,12 @@ class MenuModel {
     query += ' LIMIT ? OFFSET ?';
     params.push(per_page, offset);
 
-    const stmt = db.prepare(query);
-    let menus = stmt.all(...params);
+    const result = await db.execute({
+      sql: query,
+      args: params
+    });
+    
+    let menus = result.rows;
 
     // Parse ingredients JSON
     menus = menus.map(menu => ({
@@ -136,27 +151,28 @@ class MenuModel {
   }
 
   // Update menu (full update)
-  static update(id, menuData) {
+  static async update(id, menuData) {
     const { name, category, calories, price, ingredients, description } = menuData;
     
-    const stmt = db.prepare(`
-      UPDATE menu 
-      SET name = ?, category = ?, calories = ?, price = ?, ingredients = ?, 
-          description = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
+    const result = await db.execute({
+      sql: `
+        UPDATE menu 
+        SET name = ?, category = ?, calories = ?, price = ?, ingredients = ?, 
+            description = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+      args: [
+        name,
+        category,
+        calories,
+        price,
+        JSON.stringify(ingredients),
+        description,
+        id
+      ]
+    });
     
-    const info = stmt.run(
-      name,
-      category,
-      calories,
-      price,
-      JSON.stringify(ingredients),
-      description,
-      id
-    );
-    
-    if (info.changes === 0) {
+    if (result.rowsAffected === 0) {
       return null;
     }
     
@@ -164,52 +180,52 @@ class MenuModel {
   }
 
   // Delete menu
-  static delete(id) {
-    const stmt = db.prepare('DELETE FROM menu WHERE id = ?');
-    const info = stmt.run(id);
+  static async delete(id) {
+    const result = await db.execute({
+      sql: 'DELETE FROM menu WHERE id = ?',
+      args: [id]
+    });
     
     // Check if table is empty after deletion
-    const countStmt = db.prepare('SELECT COUNT(*) as count FROM menu');
-    const { count } = countStmt.get();
+    const countResult = await db.execute('SELECT COUNT(*) as count FROM menu');
+    const count = countResult.rows[0]?.count || 0;
     
     // Reset auto-increment if table is empty
     if (count === 0) {
-      this.resetAutoIncrement();
+      await this.resetAutoIncrement();
     }
     
-    return info.changes > 0;
+    return result.rowsAffected > 0;
   }
 
   // Delete all menus
-  static deleteAll() {
-    const stmt = db.prepare('DELETE FROM menu');
-    const info = stmt.run();
+  static async deleteAll() {
+    const result = await db.execute('DELETE FROM menu');
     
     // Reset auto-increment after deleting all
-    this.resetAutoIncrement();
+    await this.resetAutoIncrement();
     
-    return info.changes;
+    return result.rowsAffected;
   }
 
   // Count total menus
-  static count() {
-    const stmt = db.prepare('SELECT COUNT(*) as count FROM menu');
-    const { count } = stmt.get();
+  static async count() {
+    const result = await db.execute('SELECT COUNT(*) as count FROM menu');
+    const count = result.rows[0]?.count || 0;
     return count;
   }
 
   // Group by category (count mode)
-  static groupByCategory() {
-    const stmt = db.prepare(`
+  static async groupByCategory() {
+    const result = await db.execute(`
       SELECT category, COUNT(*) as count
       FROM menu
       GROUP BY category
     `);
     
-    const results = stmt.all();
     const grouped = {};
     
-    results.forEach(row => {
+    result.rows.forEach(row => {
       grouped[row.category] = row.count;
     });
     
@@ -217,13 +233,13 @@ class MenuModel {
   }
 
   // Group by category (list mode)
-  static groupByCategoryList(perCategory = 5) {
-    const stmt = db.prepare(`
+  static async groupByCategoryList(perCategory = 5) {
+    const result = await db.execute(`
       SELECT * FROM menu
       ORDER BY category, created_at DESC
     `);
     
-    let menus = stmt.all();
+    let menus = result.rows;
     
     // Parse ingredients
     menus = menus.map(menu => ({
@@ -246,7 +262,7 @@ class MenuModel {
   }
 
   // Search with full-text (convenience method, similar to findAll with q filter)
-  static search(query, page = 1, per_page = 10) {
+  static async search(query, page = 1, per_page = 10) {
     return this.findAll({ q: query, page, per_page });
   }
 }

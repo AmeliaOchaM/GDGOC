@@ -1,15 +1,14 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { createClient } = require('@libsql/client');
+const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = require('./env');
 
-// Create database connection
-const dbPath = path.join(__dirname, '../../database.sqlite');
-const db = new Database(dbPath, { verbose: console.log });
-
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
+// Create Turso database connection
+const db = createClient({
+  url: TURSO_DATABASE_URL,
+  authToken: TURSO_AUTH_TOKEN,
+});
 
 // Initialize database tables
-const initDatabase = () => {
+const initDatabase = async () => {
   const createMenuTable = `
     CREATE TABLE IF NOT EXISTS menu (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,8 +24,8 @@ const initDatabase = () => {
   `;
 
   try {
-    db.exec(createMenuTable);
-    console.log('✅ Database initialized successfully');
+    await db.execute(createMenuTable);
+    console.log('✅ Turso database initialized successfully');
   } catch (error) {
     console.error('❌ Error initializing database:', error);
     throw error;

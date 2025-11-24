@@ -3,7 +3,7 @@ const { ValidationError, NotFoundError } = require('../utils/errors');
 
 class MenuService {
   // Create new menu
-  static createMenu(menuData) {
+  static async createMenu(menuData) {
     // Validate required fields
     const { name, category, calories, price, ingredients } = menuData;
     
@@ -32,12 +32,12 @@ class MenuService {
       throw new ValidationError('Ingredients must be a non-empty array');
     }
 
-    return MenuModel.create(menuData);
+    return await MenuModel.create(menuData);
   }
 
   // Get menu by ID
-  static getMenuById(id) {
-    const menu = MenuModel.findById(id);
+  static async getMenuById(id) {
+    const menu = await MenuModel.findById(id);
     
     if (!menu) {
       throw new NotFoundError(`Menu with id ${id} not found`);
@@ -47,14 +47,14 @@ class MenuService {
   }
 
   // Get all menus with filters
-  static getAllMenus(filters) {
-    return MenuModel.findAll(filters);
+  static async getAllMenus(filters) {
+    return await MenuModel.findAll(filters);
   }
 
   // Update menu
-  static updateMenu(id, menuData) {
+  static async updateMenu(id, menuData) {
     // Check if menu exists
-    const existingMenu = MenuModel.findById(id);
+    const existingMenu = await MenuModel.findById(id);
     if (!existingMenu) {
       throw new NotFoundError(`Menu with id ${id} not found`);
     }
@@ -87,18 +87,18 @@ class MenuService {
       throw new ValidationError('Ingredients must be a non-empty array');
     }
 
-    return MenuModel.update(id, menuData);
+    return await MenuModel.update(id, menuData);
   }
 
   // Delete menu
-  static deleteMenu(id) {
+  static async deleteMenu(id) {
     // Check if menu exists
-    const existingMenu = MenuModel.findById(id);
+    const existingMenu = await MenuModel.findById(id);
     if (!existingMenu) {
       throw new NotFoundError(`Menu with id ${id} not found`);
     }
 
-    const deleted = MenuModel.delete(id);
+    const deleted = await MenuModel.delete(id);
     
     if (!deleted) {
       throw new Error('Failed to delete menu');
@@ -108,8 +108,8 @@ class MenuService {
   }
 
   // Delete all menus
-  static deleteAllMenus() {
-    const deletedCount = MenuModel.deleteAll();
+  static async deleteAllMenus() {
+    const deletedCount = await MenuModel.deleteAll();
     
     return {
       deleted: deletedCount,
@@ -118,37 +118,37 @@ class MenuService {
   }
 
   // Get total count
-  static getMenuCount() {
-    return MenuModel.count();
+  static async getMenuCount() {
+    return await MenuModel.count();
   }
 
   // Group by category
-  static groupByCategory(mode = 'count', perCategory = 5) {
+  static async groupByCategory(mode = 'count', perCategory = 5) {
     if (mode === 'list') {
-      return MenuModel.groupByCategoryList(parseInt(perCategory));
+      return await MenuModel.groupByCategoryList(parseInt(perCategory));
     }
     
-    return MenuModel.groupByCategory();
+    return await MenuModel.groupByCategory();
   }
 
   // Search menus
-  static searchMenus(query, page, perPage) {
+  static async searchMenus(query, page, perPage) {
     if (!query || query.trim().length === 0) {
       throw new ValidationError('Search query cannot be empty');
     }
     
-    return MenuModel.search(query, page, perPage);
+    return await MenuModel.search(query, page, perPage);
   }
 
   // Get menus by category
-  static getMenusByCategory(category) {
-    const result = MenuModel.findAll({ category, per_page: 1000 });
+  static async getMenusByCategory(category) {
+    const result = await MenuModel.findAll({ category, per_page: 1000 });
     return result.data;
   }
 
   // Get all menus without pagination
-  static getAllMenusNoPagination() {
-    const result = MenuModel.findAll({ per_page: 10000 });
+  static async getAllMenusNoPagination() {
+    const result = await MenuModel.findAll({ per_page: 10000 });
     return result.data;
   }
 }

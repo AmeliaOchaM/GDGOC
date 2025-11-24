@@ -1,6 +1,8 @@
 # Menu Catalog API
 
-REST API untuk manajemen menu catalog dengan Express.js dan SQLite.
+REST API untuk manajemen menu catalog dengan Express.js dan Turso (serverless SQLite).
+
+> **⚠️ PENTING:** Project ini telah di-migrasi dari SQLite lokal ke Turso untuk mendukung deployment serverless di Vercel. Lihat [TURSO_MIGRATION.md](./TURSO_MIGRATION.md) untuk panduan setup dan migrasi.
 
 # Menu Catalog API (Merged Documentation)
 
@@ -30,7 +32,7 @@ Comprehensive documentation merged from separate files: `CALORIES_API.md`, `CALO
 
 ## Project overview
 
-REST API untuk manajemen menu catalog dengan Express.js dan SQLite.
+REST API untuk manajemen menu catalog dengan Express.js dan Turso (serverless SQLite database).
 
 Project layout (top-level):
 
@@ -38,8 +40,10 @@ Project layout (top-level):
 gdgoc/
 ├── src/                 # app source: config, controllers, models, routes, services, middlewares, utils
 ├── .env                 # Environment variables (not committed)
-├── database.sqlite      # SQLite DB file
+├── .env.example         # Environment variables template
+├── database.sqlite      # SQLite DB file (legacy, not used in production)
 ├── package.json
+├── TURSO_MIGRATION.md   # Panduan lengkap migrasi ke Turso
 ├── CALORIES_API.md
 ├── CALORIES_FEATURE_SUMMARY.md
 ├── CALORIES_IMPLEMENTATION.md
@@ -56,13 +60,68 @@ gdgoc/
 npm install
 ```
 
-2. Copy environment file:
+2. Setup Turso Database (REQUIRED):
+
+**Jika belum punya Turso account:**
+```bash
+# Install Turso CLI
+curl -sSfL https://get.tur.so/install.sh | bash
+
+# Login
+turso auth login
+
+# Buat database baru
+turso db create gdgoc-menu-api
+
+# Dapatkan database URL
+turso db show gdgoc-menu-api --url
+
+# Dapatkan auth token
+turso db tokens create gdgoc-menu-api
+```
+
+**Buat tabel di Turso:**
+```bash
+turso db shell gdgoc-menu-api
+```
+
+Jalankan SQL berikut:
+```sql
+CREATE TABLE IF NOT EXISTS menu (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  calories INTEGER NOT NULL,
+  price REAL NOT NULL,
+  ingredients TEXT NOT NULL,
+  description TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+Ketik `.quit` untuk keluar.
+
+3. Copy dan setup environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Run the app:
+Edit `.env` dan isi dengan nilai yang benar:
+```env
+PORT=3000
+NODE_ENV=development
+BASE_URL=http://localhost:3000
+
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Dari Turso setup di atas
+TURSO_DATABASE_URL=libsql://your-database.turso.io
+TURSO_AUTH_TOKEN=your_turso_auth_token_here
+```
+
+4. Run the app:
 
 ```bash
 # Development
@@ -71,6 +130,30 @@ npm run dev
 # Production
 npm start
 ```
+
+**📖 Untuk panduan lengkap migrasi dan troubleshooting, lihat [TURSO_MIGRATION.md](./TURSO_MIGRATION.md)**
+
+---
+
+## 🌐 Deploy ke Vercel
+
+### Setup Environment Variables di Vercel:
+
+1. Buka Vercel Dashboard → Project Settings → Environment Variables
+2. Tambahkan:
+   - `GEMINI_API_KEY`
+   - `TURSO_DATABASE_URL`
+   - `TURSO_AUTH_TOKEN`
+   - `NODE_ENV=production`
+
+### Deploy:
+```bash
+vercel --prod
+```
+
+Atau push ke GitHub untuk auto-deployment.
+
+**⚠️ PENTING:** Vercel tidak support SQLite lokal. Wajib menggunakan Turso!
 
 ---
 
@@ -371,13 +454,20 @@ Or import the Postman collection.
 
 ## 🛠️ Tech stack
 
-- Express.js
-- better-sqlite3
-- dotenv
-- cors
-- morgan
-- nodemon (dev)
-- (Optional) @google/generative-ai for Gemini integration (service files reference it)
+- **Backend Framework:** Express.js 5.x
+- **Database:** Turso (libSQL/SQLite-compatible serverless database)
+- **Database Client:** @libsql/client
+- **AI Integration:** @google/generative-ai (Gemini API)
+- **Environment:** dotenv
+- **Middleware:** cors, morgan
+- **Development:** nodemon
+
+### Kenapa Turso?
+- ✅ SQLite-compatible (smooth migration)
+- ✅ Serverless & edge-ready
+- ✅ Perfect for Vercel deployment
+- ✅ Low latency with global distribution
+- ✅ Generous free tier
 
 ---
 

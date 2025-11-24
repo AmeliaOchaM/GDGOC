@@ -7,7 +7,7 @@ class MenuController {
   // POST /menu - Create new menu
   static async createMenu(req, res, next) {
     try {
-      const menu = MenuService.createMenu(req.body);
+      const menu = await MenuService.createMenu(req.body);
       
       return successResponse(res, {
         message: 'Menu created successfully',
@@ -32,7 +32,7 @@ class MenuController {
         sort: req.query.sort
       };
 
-      const result = MenuService.getAllMenus(filters);
+      const result = await MenuService.getAllMenus(filters);
       
       // Return pagination only if page or per_page is specified
       if (req.query.page || req.query.per_page) {
@@ -49,7 +49,7 @@ class MenuController {
   // GET /menu/:id - Get menu by ID
   static async getMenuById(req, res, next) {
     try {
-      const menu = MenuService.getMenuById(req.params.id);
+      const menu = await MenuService.getMenuById(req.params.id);
       
       return successResponse(res, { data: menu });
     } catch (error) {
@@ -60,7 +60,7 @@ class MenuController {
   // PUT /menu/:id - Full update menu
   static async updateMenu(req, res, next) {
     try {
-      const menu = MenuService.updateMenu(req.params.id, req.body);
+      const menu = await MenuService.updateMenu(req.params.id, req.body);
       
       return successResponse(res, {
         message: 'Menu updated successfully',
@@ -74,7 +74,7 @@ class MenuController {
   // DELETE /menu/:id - Delete menu
   static async deleteMenu(req, res, next) {
     try {
-      MenuService.deleteMenu(req.params.id);
+      await MenuService.deleteMenu(req.params.id);
       
       return successResponse(res, {
         message: 'Menu deleted successfully'
@@ -87,7 +87,7 @@ class MenuController {
   // DELETE /menu - Delete all menus
   static async deleteAllMenus(req, res, next) {
     try {
-      const result = MenuService.deleteAllMenus();
+      const result = await MenuService.deleteAllMenus();
       
       return successResponse(res, {
         message: result.message,
@@ -106,7 +106,7 @@ class MenuController {
       const mode = req.query.mode || 'count';
       const perCategory = req.query.per_category || 5;
       
-      const data = MenuService.groupByCategory(mode, perCategory);
+      const data = await MenuService.groupByCategory(mode, perCategory);
       
       return successResponse(res, { data });
     } catch (error) {
@@ -119,7 +119,7 @@ class MenuController {
     try {
       const { q, page, per_page } = req.query;
       
-      const result = MenuService.searchMenus(q, page, per_page);
+      const result = await MenuService.searchMenus(q, page, per_page);
       
       // Return pagination if page or per_page is specified
       if (page || per_page) {
@@ -178,7 +178,7 @@ Now generate the menu items:
 
       const createdMenus = [];
       for (const item of generatedItems) {
-        const menu = MenuService.createMenu(item);
+        const menu = await MenuService.createMenu(item);
         createdMenus.push(menu);
       }
 
@@ -202,7 +202,7 @@ Now generate the menu items:
       }
 
       // Get all available menus from database
-      const availableMenus = MenuService.getAllMenusNoPagination();
+      const availableMenus = await MenuService.getAllMenusNoPagination();
 
       // Check if we have enough menu items in each category (flexible category names)
       const mainCourses = availableMenus.filter(m => 
@@ -251,10 +251,10 @@ Now generate the menu items:
         
         // Support both ID and name lookup
         if (item.id) {
-          menu = MenuService.getMenuById(item.id);
+          menu = await MenuService.getMenuById(item.id);
         } else if (item.name) {
           // Search by name
-          const allMenus = MenuService.getAllMenusNoPagination();
+          const allMenus = await MenuService.getAllMenusNoPagination();
           menu = allMenus.find(m => 
             m.name.toLowerCase() === item.name.toLowerCase()
           );

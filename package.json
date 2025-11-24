@@ -15,10 +15,10 @@
   ],
   "author": "",
   "license": "ISC",
-  "description": "Menu Catalog API with Express.js and SQLite",
+  "description": "Menu Catalog API with Express.js and Turso",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "better-sqlite3": "^12.4.6",
+    "@libsql/client": "^0.14.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
