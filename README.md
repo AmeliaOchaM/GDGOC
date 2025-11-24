@@ -55,6 +55,7 @@ Base URL: `http://localhost:3000/api`
 | GET | `/menu/:id` | Dapatkan menu by ID |
 | PUT | `/menu/:id` | Update menu (full update) |
 | DELETE | `/menu/:id` | Hapus menu |
+| DELETE | `/menu/all` | Hapus semua menu (⚠️ use with caution) |
 | GET | `/menu/group-by-category` | Group menu by category |
 | GET | `/menu/search` | Search menu |
 
@@ -166,6 +167,23 @@ CREATE TABLE menu (
 - ✅ Input validation
 - ✅ Standardized response format
 - ✅ SQLite database dengan better-sqlite3
+- ✅ **ID Management System** - Auto-increment ID dengan pengecekan otomatis
+
+### 🆔 ID Management System
+
+Sistem manajemen ID yang memastikan:
+- ID selalu berurutan mulai dari yang terakhir + 1
+- Auto-reset ID ke 1 ketika semua data dihapus
+- Tidak ada konflik atau duplikasi ID
+- ID konsisten dan predictable
+
+**Cara kerja:**
+1. Setiap data baru akan mendapat ID = MAX(id_sebelumnya) + 1
+2. Jika database kosong, ID dimulai dari 1
+3. Saat menghapus item terakhir (database kosong), ID auto-reset
+4. Saat menggunakan `DELETE /menu/all`, ID auto-reset
+
+Untuk dokumentasi lengkap, lihat: [ID_MANAGEMENT.md](./ID_MANAGEMENT.md)
 
 ## 📄 License
 

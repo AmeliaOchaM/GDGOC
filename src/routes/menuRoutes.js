@@ -10,6 +10,9 @@ router.get('/group-by-category', MenuController.groupByCategory);
 // GET /menu/search?q={{q}}&page={{page}}&per_page={{per_page}}
 router.get('/search', MenuController.searchMenus);
 
+// DELETE /menu/all - Delete all menus (use with caution)
+router.delete('/all', MenuController.deleteAllMenus);
+
 // CRUD routes
 // POST /menu
 router.post('/', MenuController.createMenu);

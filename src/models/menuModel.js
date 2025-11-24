@@ -1,16 +1,40 @@
 const db = require('../config/database');
 
 class MenuModel {
+  // Get the next available ID
+  static getNextId() {
+    const stmt = db.prepare('SELECT MAX(id) as maxId FROM menu');
+    const result = stmt.get();
+    return result.maxId ? result.maxId + 1 : 1;
+  }
+
+  // Reset auto-increment sequence to start from 1
+  static resetAutoIncrement() {
+    try {
+      // Delete the sqlite_sequence entry for the menu table
+      const stmt = db.prepare("DELETE FROM sqlite_sequence WHERE name='menu'");
+      stmt.run();
+      return true;
+    } catch (error) {
+      console.error('Error resetting auto-increment:', error);
+      return false;
+    }
+  }
+
   // Create new menu item
   static create(menuData) {
     const { name, category, calories, price, ingredients, description } = menuData;
     
+    // Get the next available ID
+    const nextId = this.getNextId();
+    
     const stmt = db.prepare(`
-      INSERT INTO menu (name, category, calories, price, ingredients, description)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO menu (id, name, category, calories, price, ingredients, description)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     
     const info = stmt.run(
+      nextId,
       name,
       category,
       calories,
@@ -144,7 +168,34 @@ class MenuModel {
     const stmt = db.prepare('DELETE FROM menu WHERE id = ?');
     const info = stmt.run(id);
     
+    // Check if table is empty after deletion
+    const countStmt = db.prepare('SELECT COUNT(*) as count FROM menu');
+    const { count } = countStmt.get();
+    
+    // Reset auto-increment if table is empty
+    if (count === 0) {
+      this.resetAutoIncrement();
+    }
+    
     return info.changes > 0;
+  }
+
+  // Delete all menus
+  static deleteAll() {
+    const stmt = db.prepare('DELETE FROM menu');
+    const info = stmt.run();
+    
+    // Reset auto-increment after deleting all
+    this.resetAutoIncrement();
+    
+    return info.changes;
+  }
+
+  // Count total menus
+  static count() {
+    const stmt = db.prepare('SELECT COUNT(*) as count FROM menu');
+    const { count } = stmt.get();
+    return count;
   }
 
   // Group by category (count mode)

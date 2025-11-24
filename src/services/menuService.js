@@ -107,6 +107,21 @@ class MenuService {
     return true;
   }
 
+  // Delete all menus
+  static deleteAllMenus() {
+    const deletedCount = MenuModel.deleteAll();
+    
+    return {
+      deleted: deletedCount,
+      message: `Successfully deleted ${deletedCount} menu items and reset ID sequence`
+    };
+  }
+
+  // Get total count
+  static getMenuCount() {
+    return MenuModel.count();
+  }
+
   // Group by category
   static groupByCategory(mode = 'count', perCategory = 5) {
     if (mode === 'list') {

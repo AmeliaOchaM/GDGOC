@@ -84,6 +84,22 @@ class MenuController {
     }
   }
 
+  // DELETE /menu - Delete all menus
+  static async deleteAllMenus(req, res, next) {
+    try {
+      const result = MenuService.deleteAllMenus();
+      
+      return successResponse(res, {
+        message: result.message,
+        data: {
+          deleted_count: result.deleted
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // GET /menu/group-by-category - Group menus by category
   static async groupByCategory(req, res, next) {
     try {
