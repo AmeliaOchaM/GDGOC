@@ -1,5 +1,7 @@
 const MenuService = require('../services/menuService');
 const { successResponse, errorResponse } = require('../utils/response');
+const geminiService = require('../services/geminiService');
+const { ValidationError } = require('../utils/errors');
 
 class MenuController {
   // POST /menu - Create new menu
@@ -109,6 +111,88 @@ class MenuController {
       }
       
       return successResponse(res, { data: result.data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // POST /menu/auto-generate - Auto generate menu
+  static async autoGenerateMenu(req, res, next) {
+    try {
+      const { prompt } = req.body;
+
+      const fullPrompt = `
+        Generate a list of menu items based on the following prompt: "${prompt}".
+        The output must be a valid JSON array. Each object in the array must follow this schema:
+        {
+          "name": "string",
+          "category": "string (e.g., 'main-course', 'beverage', 'dessert')",
+          "calories": "number",
+          "price": "number",
+          "ingredients": "array of strings",
+          "description": "string"
+        }
+        
+        Provide a creative and persuasive name and description for each menu item.
+        Also, provide a short and long description, and a tagline.
+        Make sure the JSON is well-formed.
+      `;
+
+      const generatedItems = await geminiService.generateMenuItems(fullPrompt);
+
+      const createdMenus = [];
+      for (const item of generatedItems) {
+        const menu = MenuService.createMenu(item);
+        createdMenus.push(menu);
+      }
+
+      return successResponse(res, {
+        message: 'Menu items generated and created successfully',
+        data: createdMenus
+      }, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // POST /menu/recommendations - Get personalized menu recommendations
+  static async getRecommendations(req, res, next) {
+    try {
+      const preferences = req.body;
+
+      // Validate that at least some preferences are provided
+      if (!preferences || Object.keys(preferences).length === 0) {
+        throw new ValidationError('Please provide your preferences for recommendations');
+      }
+
+      // Get all available menus from database
+      const availableMenus = MenuService.getAllMenusNoPagination();
+
+      // Check if we have enough menu items in each category (flexible category names)
+      const mainCourses = availableMenus.filter(m => 
+        m.category === 'main-course' || m.category === 'foods' || m.category === 'food'
+      );
+      const beverages = availableMenus.filter(m => 
+        m.category === 'beverage' || m.category === 'beverages' || 
+        m.category === 'drink' || m.category === 'drinks'
+      );
+      const desserts = availableMenus.filter(m => 
+        m.category === 'dessert' || m.category === 'desserts' || m.category === 'snacks'
+      );
+
+      if (mainCourses.length === 0 || beverages.length === 0 || desserts.length === 0) {
+        throw new ValidationError(
+          `Insufficient menu items in database. Found: ${mainCourses.length} main courses, ${beverages.length} beverages, ${desserts.length} desserts. Please ensure there are items in all categories.`
+        );
+      }
+
+      // Pass available menus to Gemini for recommendation
+      const recommendations = await geminiService.recommendMenus(preferences, availableMenus);
+
+      return successResponse(res, {
+        message: 'Menu recommendations generated successfully',
+        data: recommendations
+      });
     } catch (error) {
       next(error);
     }

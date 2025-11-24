@@ -7,11 +7,17 @@
     "dev": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["express", "api", "menu", "restaurant"],
+  "keywords": [
+    "express",
+    "api",
+    "menu",
+    "restaurant"
+  ],
   "author": "",
   "license": "ISC",
   "description": "Menu Catalog API with Express.js and SQLite",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "better-sqlite3": "^12.4.6",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

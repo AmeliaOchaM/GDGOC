@@ -14,6 +14,12 @@ router.get('/search', MenuController.searchMenus);
 // POST /menu
 router.post('/', MenuController.createMenu);
 
+// POST /menu/auto-generate
+router.post('/auto-generate', MenuController.autoGenerateMenu);
+
+// POST /menu/recommendations
+router.post('/recommendations', MenuController.getRecommendations);
+
 // GET /menu
 // GET /menu?q={{q}}&category={{category}}&min_price={{min_price}}&max_price={{max_price}}&max_cal={{max_cal}}&page={{page}}&per_page={{per_page}}&sort={{sort}}
 router.get('/', MenuController.getAllMenus);

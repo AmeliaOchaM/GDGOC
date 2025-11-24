@@ -124,6 +124,18 @@ class MenuService {
     
     return MenuModel.search(query, page, perPage);
   }
+
+  // Get menus by category
+  static getMenusByCategory(category) {
+    const result = MenuModel.findAll({ category, per_page: 1000 });
+    return result.data;
+  }
+
+  // Get all menus without pagination
+  static getAllMenusNoPagination() {
+    const result = MenuModel.findAll({ per_page: 10000 });
+    return result.data;
+  }
 }
 
 module.exports = MenuService;
