@@ -5,34 +5,119 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 async function generateMenuItems(prompt) {
   try {
+    console.log('=== Generate Menu Items Debug ===');
+    console.log('Prompt received:', prompt);
+    console.log('API Key exists:', !!GEMINI_API_KEY);
+    console.log('API Key length:', GEMINI_API_KEY?.length);
+    
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.9,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 2048,
-        responseMimeType: "application/json"
+        maxOutputTokens: 2048
       }
     });
 
+    console.log('Model initialized, calling generateContent...');
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    console.log('generateContent completed');
     
-    // Try to parse JSON, handle if wrapped in markdown code blocks
+    const response = await result.response;
+    console.log('Response received');
+    
+    const text = response.text();
+    console.log('Response text length:', text.length);
+    console.log('Response text preview:', text.substring(0, 200));
+    
+    // Try to parse JSON with multiple strategies
     let json;
+    
+    // Strategy 1: Direct parse
     try {
       json = JSON.parse(text);
+      console.log('✓ Direct JSON parse successful');
+      return json;
     } catch (e) {
-      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      json = JSON.parse(cleanText);
+      console.log('Direct parse failed:', e.message);
     }
     
-    return json;
+    // Strategy 2: Remove markdown code blocks
+    try {
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      json = JSON.parse(cleanText);
+      console.log('✓ JSON parse after markdown removal successful');
+      return json;
+    } catch (e) {
+      console.log('Markdown removal failed:', e.message);
+    }
+    
+    // Strategy 3: Extract JSON from text (find array boundaries)
+    try {
+      const firstBracket = text.indexOf('[');
+      const lastBracket = text.lastIndexOf(']');
+      
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        const extractedJson = text.substring(firstBracket, lastBracket + 1);
+        json = JSON.parse(extractedJson);
+        console.log('✓ JSON parse after array extraction successful');
+        return json;
+      }
+    } catch (e) {
+      console.log('Array extraction failed:', e.message);
+    }
+    
+    // Strategy 4: Fix common JSON issues (escape quotes, newlines)
+    try {
+      let repairedText = text
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      
+      // Find JSON array
+      const firstBracket = repairedText.indexOf('[');
+      if (firstBracket !== -1) {
+        repairedText = repairedText.substring(firstBracket);
+        
+        // Try to find matching closing bracket
+        let bracketCount = 0;
+        let endIndex = -1;
+        
+        for (let i = 0; i < repairedText.length; i++) {
+          if (repairedText[i] === '[') bracketCount++;
+          if (repairedText[i] === ']') {
+            bracketCount--;
+            if (bracketCount === 0) {
+              endIndex = i + 1;
+              break;
+            }
+          }
+        }
+        
+        if (endIndex !== -1) {
+          repairedText = repairedText.substring(0, endIndex);
+          json = JSON.parse(repairedText);
+          console.log('✓ JSON parse after repair successful');
+          return json;
+        }
+      }
+    } catch (e) {
+      console.log('Repair strategy failed:', e.message);
+    }
+    
+    // All strategies failed
+    console.error('=== All JSON parsing strategies failed ===');
+    console.error('Full response text:');
+    console.error(text);
+    console.error('=== End of response ===');
+    throw new Error(`Invalid JSON response from Gemini. Unable to parse response.`);
   } catch (error) {
-    console.error('Error generating menu items:', error);
-    throw new Error('Failed to generate menu items from Gemini');
+    console.error('=== Error Details ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', error);
+    throw new Error('Failed to generate menu items from Gemini: ' + error.message);
   }
 }
 

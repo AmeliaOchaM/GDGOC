@@ -138,20 +138,40 @@ class MenuController {
       const { prompt } = req.body;
 
       const fullPrompt = `
-        Generate a list of menu items based on the following prompt: "${prompt}".
-        The output must be a valid JSON array. Each object in the array must follow this schema:
-        {
-          "name": "string",
-          "category": "string (e.g., 'main-course', 'beverage', 'dessert')",
-          "calories": "number",
-          "price": "number",
-          "ingredients": "array of strings",
-          "description": "string"
-        }
-        
-        Provide a creative and persuasive name and description for each menu item.
-        Also, provide a short and long description, and a tagline.
-        Make sure the JSON is well-formed.
+You are a professional menu generator. Generate menu items based on this request: "${prompt}"
+
+IMPORTANT: Return ONLY a valid JSON array, nothing else. No markdown, no explanations, just the JSON array.
+
+Each menu item must have this exact structure:
+{
+  "name": "string (creative Indonesian name)",
+  "category": "string (use: 'main-course', 'beverage', 'dessert', or 'snacks')",
+  "calories": number (realistic calorie count),
+  "price": number (in Indonesian Rupiah),
+  "ingredients": ["array", "of", "ingredient", "strings"],
+  "description": "string (Tagline: [catchy tagline]. Short Description: [1-2 sentences]. Long Description: [detailed 3-4 sentences about the dish, its flavors, and why it's appealing])"
+}
+
+Requirements:
+- Return an array of menu objects
+- All fields are required
+- No markdown code blocks (no \`\`\`json)
+- Valid JSON only
+- Realistic Indonesian menu items
+
+Example format:
+[
+  {
+    "name": "Nasi Goreng Spesial",
+    "category": "main-course",
+    "calories": 550,
+    "price": 35000,
+    "ingredients": ["rice", "egg", "vegetables", "soy sauce"],
+    "description": "Tagline: The Taste of Indonesia. Short Description: Traditional fried rice with authentic spices. Long Description: Our signature fried rice combines aromatic jasmine rice with fresh vegetables, perfectly fried egg, and our secret blend of Indonesian spices that create an unforgettable taste experience."
+  }
+]
+
+Now generate the menu items:
       `;
 
       const generatedItems = await geminiService.generateMenuItems(fullPrompt);
