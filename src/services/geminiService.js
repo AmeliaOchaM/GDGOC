@@ -1,5 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { GEMINI_API_KEY } = require('../config/env');
+const GeneratedMenuModel = require('../models/generatedMenuModel');
+const CalorieCalculationModel = require('../models/calorieCalculationModel');
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
@@ -118,6 +120,33 @@ async function generateMenuItems(prompt) {
     console.error('Error stack:', error.stack);
     console.error('Full error:', error);
     throw new Error('Failed to generate menu items from Gemini: ' + error.message);
+  }
+}
+
+async function generateMenuItemsAndSave(prompt) {
+  try {
+    // Generate menu items using Gemini
+    const menuItems = await generateMenuItems(prompt);
+    
+    // Save to database
+    const savedGeneration = await GeneratedMenuModel.create({
+      prompt: prompt,
+      menu_items: menuItems,
+      generation_metadata: {
+        generated_at: new Date().toISOString(),
+        model: 'gemini-2.5-flash',
+        items_count: Array.isArray(menuItems) ? menuItems.length : 0
+      }
+    });
+    
+    return {
+      menu_items: menuItems,
+      saved_id: savedGeneration.id,
+      saved: true
+    };
+  } catch (error) {
+    console.error('Error generating and saving menu items:', error);
+    throw error;
   }
 }
 
@@ -475,4 +504,37 @@ RESPOND WITH ONLY THE JSON OBJECT, NO MARKDOWN, NO EXPLANATIONS.
   }
 }
 
-module.exports = { generateMenuItems, recommendMenus, calculateCaloriesAndExercise };
+async function calculateCaloriesAndExerciseAndSave(menuItems) {
+  try {
+    // Calculate calories and exercise using Gemini
+    const calculationResult = await calculateCaloriesAndExercise(menuItems);
+    
+    // Save to database
+    const savedCalculation = await CalorieCalculationModel.create({
+      menu_items: menuItems,
+      total_calories: calculationResult.total_calories,
+      nutritional_breakdown: calculationResult.nutritional_breakdown,
+      menu_details: calculationResult.menu_details,
+      exercise_recommendations: calculationResult.exercise_recommendations,
+      health_notes: calculationResult.health_notes,
+      summary: calculationResult.summary
+    });
+    
+    return {
+      ...calculationResult,
+      saved_id: savedCalculation.id,
+      saved: true
+    };
+  } catch (error) {
+    console.error('Error calculating and saving calories:', error);
+    throw error;
+  }
+}
+
+module.exports = { 
+  generateMenuItems, 
+  generateMenuItemsAndSave,
+  recommendMenus, 
+  calculateCaloriesAndExercise,
+  calculateCaloriesAndExerciseAndSave
+};

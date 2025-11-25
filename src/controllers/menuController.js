@@ -1,6 +1,8 @@
 const MenuService = require('../services/menuService');
 const { successResponse, errorResponse } = require('../utils/response');
 const geminiService = require('../services/geminiService');
+const GeneratedMenuService = require('../services/generatedMenuService');
+const CalorieCalculationService = require('../services/calorieCalculationService');
 const { ValidationError } = require('../utils/errors');
 
 class MenuController {
@@ -174,7 +176,9 @@ Example format:
 Now generate the menu items:
       `;
 
-      const generatedItems = await geminiService.generateMenuItems(fullPrompt);
+      // Use the new function that saves to database
+      const result = await geminiService.generateMenuItemsAndSave(fullPrompt);
+      const generatedItems = result.menu_items;
 
       const createdMenus = [];
       for (const item of generatedItems) {
@@ -184,7 +188,8 @@ Now generate the menu items:
 
       return successResponse(res, {
         message: 'Menu items generated and created successfully',
-        data: createdMenus
+        data: createdMenus,
+        generation_saved_id: result.saved_id
       }, 201);
     } catch (error) {
       next(error);
@@ -275,12 +280,130 @@ Now generate the menu items:
       }
 
       // Calculate total calories and get exercise recommendations using Gemini
-      const analysis = await geminiService.calculateCaloriesAndExercise(menuDetails);
+      // And save to database
+      const analysis = await geminiService.calculateCaloriesAndExerciseAndSave(menuDetails);
 
       return successResponse(res, {
         message: 'Calorie calculation and exercise recommendations generated successfully',
-        data: analysis
+        data: analysis,
+        calculation_saved_id: analysis.saved_id
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // GET /menu/auto-generate - Get all generated menu history
+  static async getAutoGenerateHistory(req, res, next) {
+    try {
+      const filters = {
+        page: req.query.page,
+        per_page: req.query.per_page,
+        q: req.query.q,
+        start_date: req.query.start_date,
+        end_date: req.query.end_date
+      };
+
+      const result = await GeneratedMenuService.getAllGeneratedMenus(filters);
+
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // GET /menu/auto-generate/:id - Get specific generated menu by ID
+  static async getAutoGenerateById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const generatedMenu = await GeneratedMenuService.getGeneratedMenuById(id);
+
+      return successResponse(res, {
+        message: 'Generated menu retrieved successfully',
+        data: generatedMenu
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // DELETE /menu/auto-generate/:id - Delete specific generated menu
+  static async deleteAutoGenerate(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await GeneratedMenuService.deleteGeneratedMenu(id);
+
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // GET /menu/recommendations - Get all recommendation history (placeholder - recommendations tidak disimpan)
+  static async getRecommendationsHistory(req, res, next) {
+    try {
+      return successResponse(res, {
+        message: 'Recommendations are not stored in database. Use POST /menu/recommendations to generate new recommendations.',
+        data: []
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // DELETE /menu/recommendations/:id - Delete recommendation (placeholder)
+  static async deleteRecommendation(req, res, next) {
+    try {
+      return successResponse(res, {
+        message: 'Recommendations are not stored in database. Nothing to delete.'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // GET /menu/calculate-calories - Get all calorie calculation history
+  static async getCalculateCaloriesHistory(req, res, next) {
+    try {
+      const filters = {
+        page: req.query.page,
+        per_page: req.query.per_page,
+        start_date: req.query.start_date,
+        end_date: req.query.end_date,
+        min_calories: req.query.min_calories,
+        max_calories: req.query.max_calories
+      };
+
+      const result = await CalorieCalculationService.getAllCalculations(filters);
+
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // GET /menu/calculate-calories/:id - Get specific calorie calculation by ID
+  static async getCalculateCaloriesById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const calculation = await CalorieCalculationService.getCalculationById(id);
+
+      return successResponse(res, {
+        message: 'Calorie calculation retrieved successfully',
+        data: calculation
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // DELETE /menu/calculate-calories/:id - Delete specific calorie calculation
+  static async deleteCalculateCalories(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await CalorieCalculationService.deleteCalculation(id);
+
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }
