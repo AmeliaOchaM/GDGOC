@@ -270,8 +270,7 @@ async function calculateCaloriesAndExercise(menuItems) {
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 4096, // Increased to prevent truncation
-        responseMimeType: "application/json"
+        maxOutputTokens: 8192, // Further increased to prevent truncation
       }
     });
 
@@ -284,68 +283,61 @@ async function calculateCaloriesAndExercise(menuItems) {
     }));
 
     const prompt = `
-You are a professional nutritionist and fitness advisor. Analyze the following menu items that a user has selected and provide:
-1. Total calories calculation
-2. Nutritional breakdown
-3. Exercise recommendations to burn those calories
+You are a professional nutritionist and fitness advisor. Analyze the following menu items and provide calorie calculation and exercise recommendations.
 
 Selected Menu Items:
 ${JSON.stringify(menuList, null, 2)}
 
-Please provide a comprehensive analysis with these requirements:
-- Calculate the TOTAL calories from all items (considering quantities)
-- Break down macronutrients (estimated protein, carbs, fats)
-- Suggest 3-5 different exercise activities with:
-  * Exercise name
-  * Duration needed to burn the total calories
-  * Intensity level (low, moderate, high)
-  * Calories burned per hour for that activity
-  * Brief description/tips
+IMPORTANT: Return ONLY valid JSON without any markdown formatting, explanations, or code blocks.
 
-Return a JSON object with this exact structure:
+Return a JSON object with this EXACT structure (no additional text before or after):
 {
-  "total_calories": number,
+  "total_calories": <number>,
   "nutritional_breakdown": {
-    "protein": "string (estimated grams)",
-    "carbohydrates": "string (estimated grams)",
-    "fats": "string (estimated grams)",
-    "fiber": "string (optional, estimated grams)"
+    "protein": "<grams>g",
+    "carbohydrates": "<grams>g",
+    "fats": "<grams>g",
+    "fiber": "<grams>g"
   },
   "menu_details": [
     {
-      "name": "string",
-      "calories": number,
-      "quantity": number,
-      "subtotal_calories": number
+      "name": "<menu name>",
+      "calories": <number>,
+      "quantity": <number>,
+      "subtotal_calories": <number>
     }
   ],
   "exercise_recommendations": [
     {
-      "name": "string",
-      "duration_minutes": number,
+      "name": "<exercise name>",
+      "duration_minutes": <number>,
       "intensity": "low|moderate|high",
-      "calories_burned_per_hour": number,
-      "description": "string",
-      "tips": "string"
+      "calories_burned_per_hour": <number>,
+      "description": "<brief description>",
+      "tips": "<helpful tips>"
     }
   ],
-  "health_notes": "string (general health advice about this meal)",
-  "summary": "string (brief summary of the analysis)"
+  "health_notes": "<general health advice>",
+  "summary": "<brief summary>"
 }
 
-Be accurate with calorie calculations and realistic with exercise recommendations.
+Provide 3-5 exercise recommendations. Calculate TOTAL calories from all menu items considering quantities. Be accurate and realistic.
+
+RESPOND WITH ONLY THE JSON OBJECT, NO MARKDOWN, NO EXPLANATIONS.
 `;
 
+    console.log('=== Calculate Calories Debug ===');
+    console.log('Sending request to Gemini...');
+    
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();
     
-    console.log('=== Gemini Response Debug ===');
     console.log('Raw response length:', text.length);
-    console.log('First 500 chars:', text.substring(0, 500));
-    console.log('Last 500 chars:', text.substring(text.length - 500));
+    console.log('First 300 chars:', text.substring(0, 300));
+    console.log('Last 300 chars:', text.substring(Math.max(0, text.length - 300)));
     
-    // Try to parse JSON with multiple strategies
+    // Advanced JSON extraction and repair
     let json;
     
     // Strategy 1: Direct parse
@@ -354,82 +346,132 @@ Be accurate with calorie calculations and realistic with exercise recommendation
       console.log('✓ Direct JSON parse successful');
       return json;
     } catch (e) {
-      console.log('✗ Direct JSON parse failed:', e.message);
+      console.log('✗ Direct parse failed:', e.message);
     }
     
-    // Strategy 2: Remove markdown code blocks
+    // Strategy 2: Remove markdown and whitespace
     try {
-      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      json = JSON.parse(cleanText);
-      console.log('✓ JSON parse after removing markdown successful');
-      return json;
-    } catch (e) {
-      console.log('✗ JSON parse after markdown removal failed:', e.message);
-    }
-    
-    // Strategy 3: Find JSON object boundaries and extract
-    try {
-      const firstBrace = text.indexOf('{');
-      const lastBrace = text.lastIndexOf('}');
-      
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const extractedJson = text.substring(firstBrace, lastBrace + 1);
-        json = JSON.parse(extractedJson);
-        console.log('✓ JSON parse after extraction successful');
-        return json;
-      }
-    } catch (e) {
-      console.log('✗ JSON parse after extraction failed:', e.message);
-    }
-    
-    // Strategy 4: Try to repair common JSON issues
-    try {
-      let repairedText = text
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
+      let cleanText = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .replace(/^\s+|\s+$/g, '')
         .trim();
       
-      // Find the last complete JSON object
-      const firstBrace = repairedText.indexOf('{');
+      json = JSON.parse(cleanText);
+      console.log('✓ Parse after markdown removal successful');
+      return json;
+    } catch (e) {
+      console.log('✗ Parse after markdown removal failed:', e.message);
+    }
+    
+    // Strategy 3: Extract JSON object using brace matching
+    try {
+      const firstBrace = text.indexOf('{');
+      
       if (firstBrace !== -1) {
-        repairedText = repairedText.substring(firstBrace);
-        
-        // Try to find matching closing brace
         let braceCount = 0;
+        let inString = false;
+        let escapeNext = false;
         let endIndex = -1;
         
-        for (let i = 0; i < repairedText.length; i++) {
-          if (repairedText[i] === '{') braceCount++;
-          if (repairedText[i] === '}') {
-            braceCount--;
-            if (braceCount === 0) {
-              endIndex = i + 1;
-              break;
+        for (let i = firstBrace; i < text.length; i++) {
+          const char = text[i];
+          
+          if (escapeNext) {
+            escapeNext = false;
+            continue;
+          }
+          
+          if (char === '\\') {
+            escapeNext = true;
+            continue;
+          }
+          
+          if (char === '"' && !escapeNext) {
+            inString = !inString;
+            continue;
+          }
+          
+          if (!inString) {
+            if (char === '{') braceCount++;
+            if (char === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                endIndex = i + 1;
+                break;
+              }
             }
           }
         }
         
         if (endIndex !== -1) {
-          repairedText = repairedText.substring(0, endIndex);
-          json = JSON.parse(repairedText);
-          console.log('✓ JSON parse after repair successful');
+          const extractedJson = text.substring(firstBrace, endIndex);
+          json = JSON.parse(extractedJson);
+          console.log('✓ Parse after smart extraction successful');
           return json;
         }
       }
     } catch (e) {
-      console.log('✗ JSON parse after repair failed:', e.message);
+      console.log('✗ Smart extraction failed:', e.message);
     }
     
-    // All strategies failed
-    console.error('All JSON parsing strategies failed');
-    console.error('Full problematic text:', text);
-    throw new Error(`Invalid JSON response from Gemini API. Unable to parse response after trying multiple strategies.`);
+    // Strategy 4: Try to repair truncated JSON
+    try {
+      let repairedText = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      
+      const firstBrace = repairedText.indexOf('{');
+      const lastBrace = repairedText.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        repairedText = repairedText.substring(firstBrace, lastBrace + 1);
+        
+        // Try to fix common truncation issues
+        // If it ends with incomplete string, close it
+        if (repairedText.match(/:\s*"[^"]*$/)) {
+          repairedText += '"}';
+        }
+        
+        // If it ends with incomplete array, close it
+        if (repairedText.match(/:\s*\[([^\]]*)$/)) {
+          repairedText += ']}';
+        }
+        
+        // Ensure proper closing
+        const openBraces = (repairedText.match(/{/g) || []).length;
+        const closeBraces = (repairedText.match(/}/g) || []).length;
+        
+        if (openBraces > closeBraces) {
+          repairedText += '}'.repeat(openBraces - closeBraces);
+        }
+        
+        json = JSON.parse(repairedText);
+        console.log('✓ Parse after repair successful');
+        return json;
+      }
+    } catch (e) {
+      console.log('✗ Repair attempt failed:', e.message);
+    }
+    
+    // All strategies failed - provide detailed error
+    console.error('=== All JSON Parsing Strategies Failed ===');
+    console.error('Full response text:');
+    console.error(text);
+    console.error('=== End Response ===');
+    
+    throw new Error(`Invalid JSON response from Gemini API. Response length: ${text.length}. The API may have returned truncated or malformed JSON. Please check the logs above for the full response.`);
   } catch (error) {
-    console.error('Error calculating calories and exercise:', error);
+    console.error('=== Error in calculateCaloriesAndExercise ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     if (error.message.includes('Invalid JSON')) {
       throw error;
     }
-    throw new Error('Failed to calculate calories and generate exercise recommendations');
+    throw new Error('Failed to calculate calories and generate exercise recommendations: ' + error.message);
   }
 }
 
