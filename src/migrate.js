@@ -1,10 +1,15 @@
-const db = require('./config/database');
+const { db, initDatabase } = require('./config/database');
 const CalorieCalculationModel = require('./models/calorieCalculationModel');
 const GeneratedMenuModel = require('./models/generatedMenuModel');
 
 async function runMigrations() {
   try {
     console.log('Running database migrations...');
+    
+    // Initialize main database (menu table)
+    console.log('Initializing database...');
+    await initDatabase();
+    console.log('✓ Database initialized');
     
     // Create calorie_calculations table
     console.log('Creating calorie_calculations table...');

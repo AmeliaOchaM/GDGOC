@@ -1,6 +1,12 @@
 const { createClient } = require('@libsql/client');
 const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = require('./env');
 
+// Validate environment variables
+if (!TURSO_DATABASE_URL || !TURSO_AUTH_TOKEN) {
+  console.error('❌ Missing Turso credentials in environment variables');
+  throw new Error('TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are required');
+}
+
 // Create Turso database connection
 const db = createClient({
   url: TURSO_DATABASE_URL,
@@ -28,11 +34,10 @@ const initDatabase = async () => {
     console.log('✅ Turso database initialized successfully');
   } catch (error) {
     console.error('❌ Error initializing database:', error);
-    throw error;
+    // Don't throw in serverless - just log
+    // throw error;
   }
 };
 
-// Initialize on startup
-initDatabase();
-
-module.exports = db;
+// Export both db and init function (don't run on import)
+module.exports = { db, initDatabase };

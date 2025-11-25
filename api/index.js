@@ -13,9 +13,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api', routes);
-
 // Health check endpoint
 app.get('/', (req, res) => {
   res.json({
@@ -23,11 +20,16 @@ app.get('/', (req, res) => {
     message: 'GDGOC Menu Catalog API is running',
     version: '1.0.0',
     endpoints: {
-      menu: '/api/menu',
+      menus: '/api/menu',
+      calories: '/api/calories',
+      generate: '/api/generate',
       health: '/api/health'
     }
   });
 });
+
+// API Routes (mounted at root since Vercel rewrites to /api/index.js)
+app.use('/api', routes);
 
 // 404 handler
 app.use(notFoundHandler);
