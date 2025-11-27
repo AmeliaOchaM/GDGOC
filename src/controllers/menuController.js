@@ -137,61 +137,74 @@ class MenuController {
   // POST /menu/auto-generate - Auto generate menu
   static async autoGenerateMenu(req, res, next) {
     try {
-      const { prompt } = req.body;
+      const { prompt, count } = req.body;
 
-      const fullPrompt = `
-You are a professional menu generator. Generate menu items based on this request: "${prompt}"
+      // Validate inputs
+      if (!prompt) {
+        throw new ValidationError('Prompt is required');
+      }
 
-IMPORTANT: Return ONLY a valid JSON array, nothing else. No markdown, no explanations, just the JSON array.
+      const menuCount = parseInt(count) || 3; // Default to 3 if not provided
 
-Each menu item must have this exact structure:
-{
-  "name": "string (creative Indonesian name)",
-  "category": "string (use: 'main-course', 'beverage', 'dessert', or 'snacks')",
-  "calories": number (realistic calorie count),
-  "price": number (in Indonesian Rupiah),
-  "ingredients": ["array", "of", "ingredient", "strings"],
-  "description": "string (Tagline: [catchy tagline]. Short Description: [1-2 sentences]. Long Description: [detailed 3-4 sentences about the dish, its flavors, and why it's appealing])"
-}
+      const fullPrompt = `Generate exactly ${menuCount} Indonesian menu items based on: "${prompt}"
 
-Requirements:
-- Return an array of menu objects
-- All fields are required
-- No markdown code blocks (no \`\`\`json)
-- Valid JSON only
-- Realistic Indonesian menu items
+Return a JSON array with ${menuCount} objects. Each object must have:
+- name: string (Indonesian name)
+- category: one of "Makanan Berat", "Makanan Ringan", "Minuman", "Dessert"
+- calories: number (50-1000)
+- price: number (5000-150000)
+- ingredients: array of strings
+- description: string (format: "Tagline: [tagline]. Short Description: [1-2 sentences]. Long Description: [3-4 sentences]")
 
-Example format:
+Example output structure:
 [
   {
     "name": "Nasi Goreng Spesial",
-    "category": "main-course",
+    "category": "Makanan Berat",
     "calories": 550,
     "price": 35000,
-    "ingredients": ["rice", "egg", "vegetables", "soy sauce"],
-    "description": "Tagline: The Taste of Indonesia. Short Description: Traditional fried rice with authentic spices. Long Description: Our signature fried rice combines aromatic jasmine rice with fresh vegetables, perfectly fried egg, and our secret blend of Indonesian spices that create an unforgettable taste experience."
+    "ingredients": ["nasi", "ayam", "telur", "sayuran", "kecap"],
+    "description": "Tagline: Cita Rasa Nusantara. Short Description: Nasi goreng tradisional dengan bumbu autentik. Long Description: Nasi goreng signature kami menggabungkan beras jasmine aromatik dengan sayuran segar, telur goreng sempurna, dan perpaduan rahasia bumbu Indonesia yang menciptakan pengalaman rasa tak terlupakan."
   }
-]
+]`;
 
-Now generate the menu items:
-      `;
+      console.log('=== Auto Generate Menu Debug ===');
+      console.log('Prompt:', prompt);
+      console.log('Count:', menuCount);
 
-      // Use the new function that saves to database
+      // Use the function that saves to database
       const result = await geminiService.generateMenuItemsAndSave(fullPrompt);
       const generatedItems = result.menu_items;
 
+      console.log('Generated items count:', generatedItems.length);
+      console.log('Generated items:', JSON.stringify(generatedItems, null, 2));
+
+      // Create menus in database
       const createdMenus = [];
       for (const item of generatedItems) {
-        const menu = await MenuService.createMenu(item);
-        createdMenus.push(menu);
+        try {
+          const menu = await MenuService.createMenu(item);
+          createdMenus.push(menu);
+        } catch (error) {
+          console.error('Error creating menu item:', error);
+          // Continue with other items
+        }
       }
 
+      // Return structured response matching frontend expectations
       return successResponse(res, {
-        message: 'Menu items generated and created successfully',
-        data: createdMenus,
-        generation_saved_id: result.saved_id
+        message: 'Menu items generated successfully',
+        data: {
+          id: result.saved_id,
+          prompt: prompt,
+          count: menuCount,
+          menus: createdMenus,
+          generated_at: new Date().toISOString()
+        }
       }, 201);
     } catch (error) {
+      console.error('=== Auto Generate Menu Error ===');
+      console.error('Error:', error);
       next(error);
     }
   }

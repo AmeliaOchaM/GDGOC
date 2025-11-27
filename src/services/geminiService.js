@@ -15,10 +15,11 @@ async function generateMenuItems(prompt) {
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: {
-        temperature: 0.9,
+        temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 2048
+        maxOutputTokens: 4096,
+        responseMimeType: "application/json"
       }
     });
 
@@ -30,11 +31,25 @@ async function generateMenuItems(prompt) {
     console.log('Response received');
     
     const text = response.text();
+    console.log('=== RAW GEMINI RESPONSE ===');
     console.log('Response text length:', text.length);
-    console.log('Response text preview:', text.substring(0, 200));
+    console.log('First 500 chars:', text.substring(0, 500));
+    console.log('Full response text:', text);
+    console.log('=== END RAW RESPONSE ===');
     
-    // Try to parse JSON with multiple strategies
+    // With responseMimeType: "application/json", the response should be valid JSON
     let json;
+    
+    // Strategy 1: Direct parse (should work with JSON mode)
+    try {
+      json = JSON.parse(text);
+      console.log('✓ Direct JSON parse successful');
+      console.log('Parsed JSON type:', Array.isArray(json) ? 'array' : typeof json);
+      console.log('Items count:', Array.isArray(json) ? json.length : 'N/A');
+      return json;
+    } catch (e) {
+      console.log('Direct parse failed:', e.message);
+    }
     
     // Strategy 1: Direct parse
     try {
