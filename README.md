@@ -3,7 +3,8 @@
 REST API untuk manajemen menu catalog dengan Express.js dan Turso (serverless SQLite).
 
 > **✅ PROJECT STATUS:** API ini telah di-deploy dan berjalan di production:  
-> **🔗 Live URL:** [https://gdgoc-backend-ameliaocha.vercel.app/](https://gdgoc-backend-ameliaocha.vercel.app/)
+> **🔗 Backend API:** [https://gdgoc-backend-ameliaocha.vercel.app/](https://gdgoc-backend-ameliaocha.vercel.app/)  
+> **🌐 Frontend App:** [https://gdgoc-frontend-ameliaocha.vercel.app/](https://gdgoc-frontend-ameliaocha.vercel.app/)
 
 ## 🌟 Fitur Unggulan
 
@@ -22,6 +23,10 @@ API ini dilengkapi dengan **Google Gemini AI** untuk memberikan analisis dan rek
 ## 🚀 Quick Start (Production Ready)
 
 API ini siap digunakan tanpa perlu setup! Langsung test dengan:
+
+**🌐 Frontend Demo:** Kunjungi [https://gdgoc-frontend-ameliaocha.vercel.app/](https://gdgoc-frontend-ameliaocha.vercel.app/) untuk mencoba fitur-fitur API melalui chatbot interface yang interaktif!
+
+**📡 Test API Langsung:**
 
 ```bash
 # Test kesehatan API
@@ -51,6 +56,8 @@ curl -X POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/recommendation
 ```
 
 **Base URL Production:** `https://gdgoc-backend-ameliaocha.vercel.app/api`
+
+**💡 Tips:** Gunakan [Frontend App](https://gdgoc-frontend-ameliaocha.vercel.app/) untuk pengalaman yang lebih interaktif dengan chatbot interface!
 
 ---
 
@@ -222,7 +229,8 @@ npm start
 ### Status Deployment
 
 ✅ **API sudah di-deploy dan aktif**  
-🔗 **Live URL:** https://gdgoc-backend-ameliaocha.vercel.app/  
+🔗 **Backend API:** https://gdgoc-backend-ameliaocha.vercel.app/  
+🌐 **Frontend App:** https://gdgoc-frontend-ameliaocha.vercel.app/  
 📊 **Database:** Turso (serverless SQLite)  
 🤖 **AI Engine:** Google Gemini 2.5 Flash
 
@@ -231,7 +239,8 @@ npm start
 **Platform:** Vercel  
 **Region:** Auto (edge network)  
 **Database:** Turso (multi-region)  
-**Environment:** Production
+**Environment:** Production  
+**Frontend:** React + Vite (Chatbot Interface)
 
 ### Testing Production API:
 
