@@ -2,7 +2,12 @@ const { ValidationError, NotFoundError } = require('../utils/errors');
 
 // Global error handler middleware
 const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
+  // Only log unexpected errors (not 404s or validation errors)
+  const isExpectedError = err instanceof ValidationError || err instanceof NotFoundError;
+  
+  if (!isExpectedError) {
+    console.error('Error:', err);
+  }
 
   // Validation errors
   if (err instanceof ValidationError) {
