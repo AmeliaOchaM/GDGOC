@@ -15,9 +15,6 @@ API ini dilengkapi dengan **Google Gemini AI** untuk memberikan analisis dan rek
 - 🎯 **Smart Menu Recommendations** - Rekomendasi menu cerdas berdasarkan budget, dietary restrictions, preferensi, dan occasion menggunakan AI
 - 📊 **Nutritional Analysis** - Analisis nutrisi lengkap (protein, karbohidrat, lemak, fiber) dengan AI
 - 🏋️ **Personalized Exercise Plans** - Rekomendasi olahraga yang disesuaikan dengan kalori yang dikonsumsi
-
-> **⚠️ CATATAN MIGRASI:** Project ini telah di-migrasi dari SQLite lokal ke Turso untuk mendukung deployment serverless di Vercel. Lihat [TURSO_MIGRATION.md](./TURSO_MIGRATION.md) untuk panduan setup dan migrasi.
-
 ---
 
 ## 🚀 Quick Start (Production Ready)
@@ -58,14 +55,6 @@ curl -X POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/recommendation
 **Base URL Production:** `https://gdgoc-backend-ameliaocha.vercel.app/api`
 
 **💡 Tips:** Gunakan [Frontend App](https://gdgoc-frontend-ameliaocha.vercel.app/) untuk pengalaman yang lebih interaktif dengan chatbot interface!
-
----
-
-# Menu Catalog API (Merged Documentation)
-
-Comprehensive documentation merged from separate files: `CALORIES_API.md`, `CALORIES_FEATURE_SUMMARY.md`, `CALORIES_IMPLEMENTATION.md`, `ID_MANAGEMENT.md`, and `RECOMMENDATIONS_API.md` — consolidated here for easier reference.
-
----
 
 ## Table of Contents
 
