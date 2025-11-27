@@ -314,7 +314,8 @@ async function calculateCaloriesAndExercise(menuItems) {
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 8192, // Further increased to prevent truncation
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json"
       }
     });
 
@@ -332,42 +333,53 @@ You are a professional nutritionist and fitness advisor. Analyze the following m
 Selected Menu Items:
 ${JSON.stringify(menuList, null, 2)}
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting, explanations, or code blocks.
-
-Return a JSON object with this EXACT structure (no additional text before or after):
+Return a JSON object with this EXACT structure:
 {
-  "total_calories": <number>,
+  "total_calories": number,
   "nutritional_breakdown": {
-    "protein": "<grams>g",
-    "carbohydrates": "<grams>g",
-    "fats": "<grams>g",
-    "fiber": "<grams>g"
+    "protein": "string with unit (e.g., '50g')",
+    "carbohydrates": "string with unit",
+    "fats": "string with unit",
+    "fiber": "string with unit"
   },
   "menu_details": [
     {
-      "name": "<menu name>",
-      "calories": <number>,
-      "quantity": <number>,
-      "subtotal_calories": <number>
+      "name": "menu name",
+      "calories": number,
+      "quantity": number,
+      "subtotal_calories": number
     }
   ],
   "exercise_recommendations": [
     {
-      "name": "<exercise name>",
-      "duration_minutes": <number>,
+      "exercise": "exercise name (e.g., 'Brisk Walking', 'Jogging', 'Swimming')",
+      "duration": number (in minutes),
+      "calories_burned": number (total calories burned in that duration),
       "intensity": "low|moderate|high",
-      "calories_burned_per_hour": <number>,
-      "description": "<brief description>",
-      "tips": "<helpful tips>"
+      "description": "brief description of the exercise"
     }
   ],
-  "health_notes": "<general health advice>",
-  "summary": "<brief summary>"
+  "health_notes": "general health advice",
+  "summary": "brief summary"
 }
 
-Provide 3-5 exercise recommendations. Calculate TOTAL calories from all menu items considering quantities. Be accurate and realistic.
+Requirements:
+- Calculate TOTAL calories from all menu items considering quantities
+- Provide 3-5 realistic exercise recommendations
+- Each exercise should burn significant calories (50-500 kcal range)
+- Duration should be realistic (10-60 minutes)
+- calories_burned is TOTAL calories burned for the specified duration, not per hour
 
-RESPOND WITH ONLY THE JSON OBJECT, NO MARKDOWN, NO EXPLANATIONS.
+Example exercise_recommendations item:
+{
+  "exercise": "Brisk Walking",
+  "duration": 30,
+  "calories_burned": 150,
+  "intensity": "moderate",
+  "description": "Walk at a pace where you can talk but are slightly breathless"
+}
+
+Return ONLY valid JSON, no markdown, no code blocks, no explanations.
 `;
 
     console.log('=== Calculate Calories Debug ===');
