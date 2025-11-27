@@ -4,7 +4,8 @@ REST API untuk manajemen menu catalog dengan Express.js dan Turso (serverless SQ
 
 > **✅ PROJECT STATUS:** API ini telah di-deploy dan berjalan di production:  
 > **🔗 Backend API:** [https://gdgoc-backend-ameliaocha.vercel.app/](https://gdgoc-backend-ameliaocha.vercel.app/)  
-> **🌐 Frontend App:** [https://gdgoc-frontend-ameliaocha.vercel.app/](https://gdgoc-frontend-ameliaocha.vercel.app/)
+> **🌐 Frontend App:** [https://gdgoc-frontend-ameliaocha.vercel.app/](https://gdgoc-frontend-ameliaocha.vercel.app/)  
+> **📦 Frontend Repository:** [https://github.com/AmeliaOchaM/GDGOC-fe](https://github.com/AmeliaOchaM/GDGOC-fe)
 
 ## 🌟 Fitur Unggulan
 
@@ -220,7 +221,8 @@ npm start
 ✅ **API sudah di-deploy dan aktif**  
 🔗 **Backend API:** https://gdgoc-backend-ameliaocha.vercel.app/  
 🌐 **Frontend App:** https://gdgoc-frontend-ameliaocha.vercel.app/  
-📊 **Database:** Turso (serverless SQLite)  
+� **Frontend Repository:** https://github.com/AmeliaOchaM/GDGOC-fe  
+�📊 **Database:** Turso (serverless SQLite)  
 🤖 **AI Engine:** Google Gemini 2.5 Flash
 
 ### Informasi Deployment:
