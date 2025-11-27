@@ -2,7 +2,57 @@
 
 REST API untuk manajemen menu catalog dengan Express.js dan Turso (serverless SQLite).
 
-> **⚠️ PENTING:** Project ini telah di-migrasi dari SQLite lokal ke Turso untuk mendukung deployment serverless di Vercel. Lihat [TURSO_MIGRATION.md](./TURSO_MIGRATION.md) untuk panduan setup dan migrasi.
+> **✅ PROJECT STATUS:** API ini telah di-deploy dan berjalan di production:  
+> **🔗 Live URL:** [https://gdgoc-backend-ameliaocha.vercel.app/](https://gdgoc-backend-ameliaocha.vercel.app/)
+
+## 🌟 Fitur Unggulan
+
+API ini dilengkapi dengan **Google Gemini AI** untuk memberikan analisis dan rekomendasi yang lebih canggih:
+
+- 🤖 **AI Menu Generator** - Generate menu otomatis berdasarkan kategori, budget, dan preferensi
+- 🔥 **Calorie Calculator & Exercise Recommendations** - Hitung kalori total dan dapatkan rekomendasi olahraga yang dipersonalisasi menggunakan Gemini AI
+- 🎯 **Smart Menu Recommendations** - Rekomendasi menu cerdas berdasarkan budget, dietary restrictions, preferensi, dan occasion menggunakan AI
+- 📊 **Nutritional Analysis** - Analisis nutrisi lengkap (protein, karbohidrat, lemak, fiber) dengan AI
+- 🏋️ **Personalized Exercise Plans** - Rekomendasi olahraga yang disesuaikan dengan kalori yang dikonsumsi
+
+> **⚠️ CATATAN MIGRASI:** Project ini telah di-migrasi dari SQLite lokal ke Turso untuk mendukung deployment serverless di Vercel. Lihat [TURSO_MIGRATION.md](./TURSO_MIGRATION.md) untuk panduan setup dan migrasi.
+
+---
+
+## 🚀 Quick Start (Production Ready)
+
+API ini siap digunakan tanpa perlu setup! Langsung test dengan:
+
+```bash
+# Test kesehatan API
+curl https://gdgoc-backend-ameliaocha.vercel.app/api
+
+# Lihat semua menu
+curl https://gdgoc-backend-ameliaocha.vercel.app/api/menu
+
+# Hitung kalori (AI-powered)
+curl -X POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/calculate-calories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "menu_items": [
+      {"name": "Nasi Goreng", "quantity": 1},
+      {"name": "Es Teh Manis", "quantity": 2}
+    ]
+  }'
+
+# Dapatkan rekomendasi menu (AI-powered)
+curl -X POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "budget": 100000,
+    "preferences": ["manis", "coklat"],
+    "meal_type": "lunch"
+  }'
+```
+
+**Base URL Production:** `https://gdgoc-backend-ameliaocha.vercel.app/api`
+
+---
 
 # Menu Catalog API (Merged Documentation)
 
@@ -54,6 +104,21 @@ gdgoc/
 
 ## 🚀 Setup
 
+### Opsi 1: Gunakan API yang Sudah Di-Deploy (Recommended)
+
+API ini sudah berjalan di production dan siap digunakan:
+
+**Base URL:** `https://gdgoc-backend-ameliaocha.vercel.app/api`
+
+**Contoh endpoint:**
+- GET https://gdgoc-backend-ameliaocha.vercel.app/api/menu
+- POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/calculate-calories
+- POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/recommendations
+
+### Opsi 2: Setup Local Development
+
+Jika ingin menjalankan di local untuk development:
+
 1. Install dependencies:
 
 ```bash
@@ -102,7 +167,21 @@ CREATE TABLE IF NOT EXISTS menu (
 
 Ketik `.quit` untuk keluar.
 
-3. Copy dan setup environment file:
+3. Setup Google Gemini API Key:
+
+API ini menggunakan **Google Gemini AI (gemini-2.5-flash)** untuk fitur-fitur advanced seperti:
+- Generate menu otomatis
+- Kalkulasi kalori dan rekomendasi olahraga
+- Rekomendasi menu yang dipersonalisasi
+- Analisis nutrisi
+
+**Dapatkan API Key:**
+1. Kunjungi [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Login dengan Google account
+3. Buat API key baru
+4. Copy API key untuk digunakan di `.env`
+
+4. Copy dan setup environment file:
 
 ```bash
 cp .env.example .env
@@ -114,14 +193,17 @@ PORT=3000
 NODE_ENV=development
 BASE_URL=http://localhost:3000
 
+# Google Gemini API Key (REQUIRED untuk fitur AI)
+# Dapatkan di: https://makersuite.google.com/app/apikey
 GEMINI_API_KEY=your_gemini_api_key_here
 
+# Turso Database Configuration
 # Dari Turso setup di atas
 TURSO_DATABASE_URL=libsql://your-database.turso.io
 TURSO_AUTH_TOKEN=your_turso_auth_token_here
 ```
 
-4. Run the app:
+5. Run the app:
 
 ```bash
 # Development
@@ -135,18 +217,51 @@ npm start
 
 ---
 
-## 🌐 Deploy ke Vercel
+## 🌐 Production Deployment
 
-### Setup Environment Variables di Vercel:
+### Status Deployment
+
+✅ **API sudah di-deploy dan aktif**  
+🔗 **Live URL:** https://gdgoc-backend-ameliaocha.vercel.app/  
+📊 **Database:** Turso (serverless SQLite)  
+🤖 **AI Engine:** Google Gemini 2.5 Flash
+
+### Informasi Deployment:
+
+**Platform:** Vercel  
+**Region:** Auto (edge network)  
+**Database:** Turso (multi-region)  
+**Environment:** Production
+
+### Testing Production API:
+
+```bash
+# Test endpoint kesehatan
+curl https://gdgoc-backend-ameliaocha.vercel.app/api
+
+# Get semua menu
+curl https://gdgoc-backend-ameliaocha.vercel.app/api/menu
+
+# Hitung kalori (contoh)
+curl -X POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/calculate-calories \
+  -H "Content-Type: application/json" \
+  -d '{"menu_items": [{"name": "Nasi Goreng", "quantity": 1}]}'
+```
+
+### Setup Deployment Sendiri (Opsional)
+
+Jika ingin deploy ke Vercel sendiri:
+
+#### 1. Setup Environment Variables di Vercel:
 
 1. Buka Vercel Dashboard → Project Settings → Environment Variables
 2. Tambahkan:
-   - `GEMINI_API_KEY`
-   - `TURSO_DATABASE_URL`
-   - `TURSO_AUTH_TOKEN`
+   - `GEMINI_API_KEY` - API key dari Google AI Studio (untuk fitur AI)
+   - `TURSO_DATABASE_URL` - URL database Turso
+   - `TURSO_AUTH_TOKEN` - Auth token Turso
    - `NODE_ENV=production`
 
-### Deploy:
+#### 2. Deploy:
 ```bash
 vercel --prod
 ```
@@ -159,9 +274,10 @@ Atau push ke GitHub untuk auto-deployment.
 
 ## 📡 API Endpoints (summary)
 
-Base URL: `http://localhost:3000/api`
+**Production Base URL:** `https://gdgoc-backend-ameliaocha.vercel.app/api`  
+**Local Base URL:** `http://localhost:3000/api`
 
-Key endpoints:
+### Core Menu Management:
 
 - POST /menu — create menu
 - GET /menu — list menus (filter, pagination)
@@ -171,9 +287,24 @@ Key endpoints:
 - DELETE /menu/all — delete all menus (resets ID sequence)
 - GET /menu/group-by-category — group by category
 - GET /menu/search — search
-- POST /menu/auto-generate — AI generate menu
-- POST /menu/recommendations — AI-powered recommendations (see section)
-- POST /menu/calculate-calories — Calculate calories & exercise recommendations (detailed below)
+
+### 🤖 AI-Powered Endpoints (menggunakan Google Gemini):
+
+- **POST /menu/auto-generate** — Generate menu otomatis dengan AI
+  - Input: kategori, jumlah item, preferensi
+  - Output: Menu items yang di-generate dengan detail lengkap
+  
+- **POST /menu/calculate-calories** — Kalkulasi kalori & rekomendasi olahraga
+  - Input: daftar menu items dengan quantity
+  - Output: Total kalori, breakdown nutrisi, rekomendasi olahraga dengan durasi dan intensitas
+  - AI Features: Personalized exercise plans, health notes, workout tips
+  
+- **POST /menu/recommendations** — Rekomendasi menu cerdas
+  - Input: budget, dietary restrictions, preferences, meal type, cuisine, occasion
+  - Output: Rekomendasi main course, beverage, dessert dengan alasan pemilihan
+  - AI Features: Smart matching, personalized reasons, budget optimization
+
+> **💡 Catatan:** Semua endpoint AI menggunakan model **gemini-2.5-flash** untuk analisis yang cepat dan akurat.
 
 Refer to the dedicated sections for full request/response examples, validation rules, and error cases.
 
@@ -181,9 +312,11 @@ Refer to the dedicated sections for full request/response examples, validation r
 
 ## Calories Calculator & Exercise Recommendations (Full API)
 
-This endpoint computes total calories from user-selected menu items and returns exercise recommendations to burn those calories using Google Gemini AI.
+This endpoint computes total calories from user-selected menu items and returns exercise recommendations to burn those calories using **Google Gemini AI**.
 
 ### POST /api/menu/calculate-calories
+
+**Production URL:** `https://gdgoc-backend-ameliaocha.vercel.app/api/menu/calculate-calories`
 
 Request body example:
 
@@ -278,10 +411,22 @@ Error examples:
 Usage examples (curl):
 
 ```bash
+# Production API
+curl -X POST https://gdgoc-backend-ameliaocha.vercel.app/api/menu/calculate-calories \
+  -H "Content-Type: application/json" \
+  -d '{"menu_items": [{"id": 1, "quantity": 1}, {"id": 5, "quantity": 2}]}'
+
+# Local API (development)
 curl -X POST http://localhost:3000/api/menu/calculate-calories \
   -H "Content-Type: application/json" \
   -d '{"menu_items": [{"id": 1, "quantity": 1}, {"id": 5, "quantity": 2}]}'
 ```
+
+**AI Features:**
+- 🔥 Automatic calorie calculation from menu items
+- 📊 Detailed nutritional breakdown (protein, carbs, fats, fiber)
+- 🏃 Personalized exercise recommendations with duration and intensity
+- 💡 Health notes and workout tips powered by Gemini AI
 
 If quantity omitted, default is 1.
 
@@ -347,7 +492,9 @@ Performance notes:
 
 Endpoint: POST `/api/menu/recommendations`
 
-Purpose: Use Gemini AI to generate personalized menu recommendations using only menu items present in the database.
+**Production URL:** `https://gdgoc-backend-ameliaocha.vercel.app/api/menu/recommendations`
+
+Purpose: Use **Gemini AI** to generate personalized menu recommendations using only menu items present in the database.
 
 Request example:
 
@@ -392,6 +539,12 @@ Notes & tips:
 
 - System only recommends items that exist in DB; ensure DB has `main-course`, `beverage`, and `dessert` categories.
 - Provide as much detail as possible in request to improve recommendations.
+- **AI Features:**
+  - 🎯 Smart menu matching based on preferences and restrictions
+  - 💰 Budget optimization
+  - 🍽️ Contextual recommendations (meal type, cuisine, occasion)
+  - 📝 Detailed reasoning for each recommendation
+  - 🤖 Powered by Gemini 2.5 Flash for fast and accurate analysis
 
 ---
 
@@ -455,9 +608,10 @@ Or import the Postman collection.
 ## 🛠️ Tech stack
 
 - **Backend Framework:** Express.js 5.x
-- **Database:** Turso (libSQL/SQLite-compatible serverless database)
+- **Database:** Turso (libSQL/SQLite-compatible serverless database) - **✅ Active & Connected**
 - **Database Client:** @libsql/client
-- **AI Integration:** @google/generative-ai (Gemini API)
+- **AI Integration:** @google/generative-ai (Gemini 2.5 Flash) - **✅ Integrated**
+- **Deployment:** Vercel (Production) - **✅ Live at [https://gdgoc-backend-ameliaocha.vercel.app/](https://gdgoc-backend-ameliaocha.vercel.app/)**
 - **Environment:** dotenv
 - **Middleware:** cors, morgan
 - **Development:** nodemon
@@ -468,6 +622,14 @@ Or import the Postman collection.
 - ✅ Perfect for Vercel deployment
 - ✅ Low latency with global distribution
 - ✅ Generous free tier
+- ✅ **Sudah terhubung dan aktif di production**
+
+### Kenapa Gemini AI?
+- ✅ Fast inference dengan model gemini-2.5-flash
+- ✅ Excellent for structured JSON output
+- ✅ Cost-effective untuk production use
+- ✅ Advanced natural language understanding
+- ✅ **Terintegrasi untuk fitur: auto-generate, calories calculation, dan recommendations**
 
 ---
 
