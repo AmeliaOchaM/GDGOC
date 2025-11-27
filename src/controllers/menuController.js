@@ -214,6 +214,9 @@ Example output structure:
     try {
       const preferences = req.body;
 
+      console.log('=== Get Recommendations Debug ===');
+      console.log('Preferences:', JSON.stringify(preferences, null, 2));
+
       // Validate that at least some preferences are provided
       if (!preferences || Object.keys(preferences).length === 0) {
         throw new ValidationError('Please provide your preferences for recommendations');
@@ -221,23 +224,42 @@ Example output structure:
 
       // Get all available menus from database
       const availableMenus = await MenuService.getAllMenusNoPagination();
+      
+      console.log('Total available menus:', availableMenus.length);
+      console.log('Sample menu categories:', availableMenus.slice(0, 5).map(m => m.category));
 
-      // Check if we have enough menu items in each category (flexible category names)
-      const mainCourses = availableMenus.filter(m => 
-        m.category === 'main-course' || m.category === 'foods' || m.category === 'food'
-      );
-      const beverages = availableMenus.filter(m => 
-        m.category === 'beverage' || m.category === 'beverages' || 
-        m.category === 'drink' || m.category === 'drinks'
-      );
-      const desserts = availableMenus.filter(m => 
-        m.category === 'dessert' || m.category === 'desserts' || m.category === 'snacks'
-      );
+      // Check if we have enough menu items (more flexible category matching)
+      const mainCourses = availableMenus.filter(m => {
+        const cat = m.category?.toLowerCase() || '';
+        return cat.includes('makanan berat') || 
+               cat.includes('main') || 
+               cat.includes('food') || 
+               cat === 'foods';
+      });
+      
+      const beverages = availableMenus.filter(m => {
+        const cat = m.category?.toLowerCase() || '';
+        return cat.includes('minuman') || 
+               cat.includes('beverage') || 
+               cat.includes('drink');
+      });
+      
+      const desserts = availableMenus.filter(m => {
+        const cat = m.category?.toLowerCase() || '';
+        return cat.includes('dessert') || 
+               cat.includes('makanan ringan') || 
+               cat.includes('snack');
+      });
 
-      if (mainCourses.length === 0 || beverages.length === 0 || desserts.length === 0) {
-        throw new ValidationError(
-          `Insufficient menu items in database. Found: ${mainCourses.length} main courses, ${beverages.length} beverages, ${desserts.length} desserts. Please ensure there are items in all categories.`
-        );
+      console.log(`Categories found: ${mainCourses.length} main courses, ${beverages.length} beverages, ${desserts.length} desserts`);
+
+      if (availableMenus.length === 0) {
+        throw new ValidationError('No menu items found in database. Please add some menu items first.');
+      }
+
+      if (mainCourses.length === 0 && beverages.length === 0 && desserts.length === 0) {
+        // If no items match any category, just use all available menus
+        console.warn('No items matched expected categories. Using all available menus.');
       }
 
       // Pass available menus to Gemini for recommendation
@@ -248,6 +270,8 @@ Example output structure:
         data: recommendations
       });
     } catch (error) {
+      console.error('=== Get Recommendations Error ===');
+      console.error('Error:', error);
       next(error);
     }
   }

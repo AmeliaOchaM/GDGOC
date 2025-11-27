@@ -167,13 +167,17 @@ async function generateMenuItemsAndSave(prompt) {
 
 async function recommendMenus(preferences, availableMenus) {
   try {
+    console.log('=== Recommend Menus Debug ===');
+    console.log('Preferences:', preferences);
+    console.log('Available menus count:', availableMenus.length);
+    
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: {
-        temperature: 0.8,
+        temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 3048,
+        maxOutputTokens: 4096,
         responseMimeType: "application/json"
       }
     });
@@ -190,17 +194,21 @@ async function recommendMenus(preferences, availableMenus) {
       additional_notes
     } = preferences;
 
-    // Group menus by category - with flexible category names
-    const mainCourses = availableMenus.filter(m => 
-      m.category === 'main-course' || m.category === 'foods' || m.category === 'food'
-    );
-    const beverages = availableMenus.filter(m => 
-      m.category === 'beverage' || m.category === 'beverages' || 
-      m.category === 'drink' || m.category === 'drinks'
-    );
-    const desserts = availableMenus.filter(m => 
-      m.category === 'dessert' || m.category === 'desserts' || m.category === 'snacks'
-    );
+    // Group menus by category - more flexible matching
+    const mainCourses = availableMenus.filter(m => {
+      const cat = m.category?.toLowerCase() || '';
+      return cat.includes('makanan berat') || cat.includes('main') || cat.includes('food');
+    });
+    const beverages = availableMenus.filter(m => {
+      const cat = m.category?.toLowerCase() || '';
+      return cat.includes('minuman') || cat.includes('beverage') || cat.includes('drink');
+    });
+    const desserts = availableMenus.filter(m => {
+      const cat = m.category?.toLowerCase() || '';
+      return cat.includes('dessert') || cat.includes('makanan ringan') || cat.includes('snack');
+    });
+
+    console.log(`Found: ${mainCourses.length} main, ${beverages.length} beverages, ${desserts.length} desserts`);
 
     // Simplify menu data to reduce token usage
     const simplifyMenu = (menu) => ({
@@ -209,99 +217,105 @@ async function recommendMenus(preferences, availableMenus) {
       category: menu.category,
       price: menu.price,
       calories: menu.calories,
-      ingredients: menu.ingredients
+      ingredients: Array.isArray(menu.ingredients) ? menu.ingredients : []
     });
 
-    const prompt = `
-You are a professional food recommendation system. Based on the user's preferences and the available menu items in our database, recommend a complete meal that includes food, drinks, and desserts.
+    // Build menu lists (limit to prevent token overflow)
+    const mainList = mainCourses.slice(0, 20).map(simplifyMenu);
+    const beverageList = beverages.slice(0, 15).map(simplifyMenu);
+    const dessertList = desserts.slice(0, 15).map(simplifyMenu);
 
-IMPORTANT: You MUST choose from the available menu items listed below. Do NOT create new items.
+    const prompt = `
+You are a professional food recommendation system. Based on user preferences and available menu items, recommend a complete meal.
 
 User Preferences:
-${budget ? `- Budget: Rp ${budget}` : ''}
+${budget ? `- Budget: Rp ${budget}` : '- Budget: No limit'}
 ${dietary_restrictions && dietary_restrictions.length > 0 ? `- Dietary Restrictions: ${dietary_restrictions.join(', ')}` : ''}
 ${dislikes && dislikes.length > 0 ? `- Dislikes: ${dislikes.join(', ')}` : ''}
-${userPreferences && userPreferences.length > 0 ? `- Preferences/Likes: ${userPreferences.join(', ')}` : ''}
+${userPreferences && userPreferences.length > 0 ? `- Likes: ${userPreferences.join(', ')}` : ''}
 ${meal_type ? `- Meal Type: ${meal_type}` : ''}
-${cuisine ? `- Preferred Cuisine: ${cuisine}` : ''}
+${cuisine ? `- Cuisine: ${cuisine}` : ''}
 ${occasion ? `- Occasion: ${occasion}` : ''}
-${additional_notes ? `- Additional Notes: ${additional_notes}` : ''}
+${additional_notes ? `- Notes: ${additional_notes}` : ''}
 
-Available Main Courses/Foods:
-${JSON.stringify(mainCourses.map(simplifyMenu), null, 2)}
+Available Menus:
+Main Courses: ${JSON.stringify(mainList)}
+Beverages: ${JSON.stringify(beverageList)}
+Desserts: ${JSON.stringify(dessertList)}
 
-Available Beverages/Drinks:
-${JSON.stringify(beverages.map(simplifyMenu), null, 2)}
+Requirements:
+1. Select ONLY from the available menus above
+2. Use exact details (id, name, price, calories, ingredients) from database
+3. Avoid items with ingredients the user dislikes
+4. Respect dietary restrictions
+5. Stay within budget if specified
+6. Provide balanced meal
 
-Available Desserts/Snacks:
-${JSON.stringify(desserts.map(simplifyMenu), null, 2)}
-
-Please provide recommendations that strictly follow these conditions:
-1. **MUST** select items ONLY from the available menu lists above
-2. Use the exact item details (id, name, price, calories, ingredients) from the database
-3. AVOID any items that contain ingredients the user dislikes
-4. RESPECT all dietary restrictions
-5. Stay within the budget if specified
-6. Provide a balanced meal with appropriate portions
-
-Return a JSON object with this exact structure:
+Return JSON with this structure:
 {
   "recommendations": {
     "main_course": {
-      "id": number (from database),
-      "name": "string (exact name from database)",
-      "category": "string (exact category from database)",
-      "description": "string (from database)",
-      "price": number (from database),
-      "calories": number (from database),
-      "ingredients": ["array from database"],
-      "reason": "Why this is recommended based on user preferences"
+      "id": number,
+      "name": "exact name from database",
+      "category": "exact category",
+      "description": "from database",
+      "price": number,
+      "calories": number,
+      "ingredients": ["array"],
+      "reason": "why recommended"
     },
     "beverage": {
-      "id": number (from database),
-      "name": "string (exact name from database)",
-      "category": "string (exact category from database)",
-      "description": "string (from database)",
-      "price": number (from database),
-      "calories": number (from database),
-      "ingredients": ["array from database"],
-      "reason": "Why this is recommended based on user preferences"
+      "id": number,
+      "name": "exact name",
+      "category": "exact category",
+      "description": "from database",
+      "price": number,
+      "calories": number,
+      "ingredients": ["array"],
+      "reason": "why recommended"
     },
     "dessert": {
-      "id": number (from database),
-      "name": "string (exact name from database)",
-      "category": "string (exact category from database)",
-      "description": "string (from database)",
-      "price": number (from database),
-      "calories": number (from database),
-      "ingredients": ["array from database"],
-      "reason": "Why this is recommended based on user preferences"
+      "id": number,
+      "name": "exact name",
+      "category": "exact category",
+      "description": "from database",
+      "price": number,
+      "calories": number,
+      "ingredients": ["array"],
+      "reason": "why recommended"
     }
   },
   "total_price": number,
   "total_calories": number,
-  "summary": "A brief summary explaining why these items work well together and meet the user's requirements"
+  "summary": "brief summary"
 }
-
-Make sure all recommendations are from the available menu and perfectly match the user's criteria.
 `;
 
+    console.log('Sending request to Gemini...');
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
     
-    // Try to parse JSON, handle if wrapped in markdown code blocks
+    console.log('Response received, length:', text.length);
+    console.log('First 200 chars:', text.substring(0, 200));
+    
+    // With JSON mode, should be direct JSON
     let json;
     try {
       json = JSON.parse(text);
+      console.log('✓ Recommendations parsed successfully');
+      return json;
     } catch (e) {
+      console.log('Direct parse failed, trying cleanup:', e.message);
       const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       json = JSON.parse(cleanText);
+      console.log('✓ Recommendations parsed after cleanup');
+      return json;
     }
-    
-    return json;
   } catch (error) {
-    console.error('Error generating menu recommendations:', error);
+    console.error('=== Error generating menu recommendations ===');
+    console.error('Error:', error);
+    console.error('Error stack:', error.stack);
     throw new Error('Failed to generate menu recommendations from Gemini');
   }
 }
