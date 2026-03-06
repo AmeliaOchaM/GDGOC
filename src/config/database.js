@@ -13,6 +13,8 @@ const db = createClient({
   authToken: TURSO_AUTH_TOKEN,
 });
 
+
+
 // Initialize database tables
 const initDatabase = async () => {
   const createMenuTable = `
